@@ -1,3 +1,4 @@
+// MapComponent.js (ready to paste)
 import { useState, useEffect, useRef, useCallback } from 'react';
 // --- NAYA IMPORT (Download icon ke liye) ---
 import { MapPin, Navigation, Loader, Crosshair, CheckSquare, Download } from 'lucide-react';
@@ -10,6 +11,14 @@ import tokml from 'tokml'; // KML export ke liye
 
 import '../Style/map.css';
 import HouseDetailsModal from './HouseDetailsModal';
+
+/*
+  Color map for usage -> used to style polygons on map and in exported KML.
+  Modify these hex values as desired.
+*/
+const propertyUsageColors = {
+ default: "#00BFFF"          // Sky Blue fallback
+};
 
 /**
  * KML string ko file ke roop mein download karata hai.
@@ -41,6 +50,57 @@ export default function MapComponent() {
   
   // --- NAYA REF (Drawn shapes ko store karne ke liye) ---
   const drawnItemsRef = useRef(null);
+
+  // --- helper: ensure a layer stores usage on its feature.properties + options ---
+  function setLayerUsageProperty(layer, usage) {
+    layer.feature = layer.feature || { type: 'Feature', properties: {} };
+    layer.feature.properties = layer.feature.properties || {};
+    layer.feature.properties.usageOfProperty = usage || 'default';
+    layer.options = layer.options || {};
+    layer.options.usageOfProperty = usage || 'default';
+  }
+
+  // --- helper: collect drawn items as a FeatureCollection and ensure usage exists ---
+ function collectPolygonsGeoJSON() {
+  if (!drawnItemsRef.current) return null;
+  const fc = drawnItemsRef.current.toGeoJSON();
+
+  fc.features.forEach((feature, index) => {
+    feature.properties = feature.properties || {};
+
+    // ensure usageOfProperty exists
+    feature.properties.usageOfProperty = feature.properties.usageOfProperty || 'default';
+
+    // ensure surveyPoint exists
+    if (!feature.properties.surveyPoint) {
+      feature.properties.surveyPoint = [
+        location.lng,
+        location.lat,
+      ];
+    }
+  });
+
+  return fc;
+}
+
+
+  // Apply color to drawn polygons and set usage property on each layer
+  const applyPolygonColor = (usage) => {
+    if (!drawnItemsRef.current) return;
+    const color = propertyUsageColors[usage] || propertyUsageColors.default;
+
+    drawnItemsRef.current.eachLayer((layer) => {
+      // L.Polygon includes rectangles as well; use geometry type check if needed
+      if (layer instanceof L.Polygon) {
+        layer.setStyle({
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.5
+        });
+        setLayerUsageProperty(layer, usage);
+      }
+    });
+  };
 
   // ... (fetchAccurateLocation function waisa hi hai) ...
   const fetchAccurateLocation = useCallback((onSuccess, onError) => {
@@ -161,9 +221,23 @@ export default function MapComponent() {
 
       // 3. Jab koi shape create ho, toh use 'drawnItems' group mein add karein
       map.on(L.Draw.Event.CREATED, function (event) {
-        const layer = event.layer;
-        drawnItems.addLayer(layer);
-      });
+  const layer = event.layer;
+
+  // attach GPS survey point to this polygon
+  layer.feature = layer.feature || { type: 'Feature', properties: {} };
+  layer.feature.properties.surveyPoint = [
+    location.lng,
+    location.lat,
+  ];
+
+  // keep your old usage default
+  setLayerUsageProperty(layer, 'default');
+
+  // add to group
+  drawnItems.addLayer(layer);
+});
+
+
       // --- NAYA CODE (LEAFLET-DRAW) KHATAM ---
 
     }
@@ -213,8 +287,9 @@ export default function MapComponent() {
   };
   
 
-  // --- (handleSaveSurvey function waisa hi hai, yeh POINT KML banata hai) ---
+  // --- (handleSaveSurvey function) ---
   const handleSaveSurvey = (formData) => {
+    // Build point KML (keeps existing point-download behavior)
     const kmlString = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
  <Placemark>
@@ -232,6 +307,7 @@ export default function MapComponent() {
  </Placemark>
 </kml>`;
 
+    // build survey payload
     const surveyData = {
       ...formData,
       location: {
@@ -242,12 +318,26 @@ export default function MapComponent() {
       kmlData: kmlString,
     };
     
+    // remove large fields if present
     delete surveyData.photos;
     console.log('Data to be sent to MongoDB:', surveyData);
 
+    // Download the point KML locally (existing behavior)
     const fileName = `${formData.houseNumber || formData.propertyName || 'survey'}.kml`;
     downloadKML(kmlString, fileName); // Helper function ka istemal
 
+    // --- NEW: apply color to drawn polygons on map (instant feedback + store usage on layer) ---
+    if (formData.usageOfProperty) {
+      applyPolygonColor(formData.usageOfProperty);
+    }
+
+    // --- NEW: collect drawn polygons (if any) and attach to payload so server persists them ---
+    const polygonsGeoJSON = collectPolygonsGeoJSON();
+    if (polygonsGeoJSON && polygonsGeoJSON.features && polygonsGeoJSON.features.length > 0) {
+      surveyData.polygons = polygonsGeoJSON;
+    }
+
+    // send to backend
     fetch('http://localhost:5000/api/save-survey', {
       method: 'POST',
       headers: {
@@ -255,10 +345,21 @@ export default function MapComponent() {
       },
       body: JSON.stringify(surveyData),
     })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Success:', data);
-      alert('Survey data saved to DB and KML file downloaded!');
+    .then(async (response) => {
+      const json = await response.json().catch(() => ({}));
+      return { status: response.status, body: json };
+    })
+    .then(({ status, body }) => {
+      console.log('Server response:', status, body);
+      // server should return kmlUrl either at top level or in body.data
+      const publicKml = body.kmlUrl || (body.data && body.data.kmlUrl);
+      if (publicKml) {
+        alert('Survey saved. Public KML URL:\n' + publicKml);
+        // open the public KML in a new tab
+        window.open(publicKml, '_blank');
+      } else {
+        alert('Survey data saved to DB. KML downloaded locally (if any).');
+      }
     })
     .catch((error) => {
       console.error('Error:', error);
@@ -270,76 +371,74 @@ export default function MapComponent() {
   // Yeh function drawn POLYGONS/LINES ko KML mein download karegi
   //modified function with styling
   const handleDownloadDrawnKML = () => {
-  if (!drawnItemsRef.current) {
-    alert("Draw layer abhi initialize nahin hua hai.");
-    return;
-  }
+    if (!drawnItemsRef.current) {
+      alert("Draw layer abhi initialize nahin hua hai.");
+      return;
+    }
 
-  // Convert drawn shapes to GeoJSON
-  const allGeoJSON = drawnItemsRef.current.toGeoJSON();
+    // Convert drawn shapes to GeoJSON
+    const allGeoJSON = drawnItemsRef.current.toGeoJSON();
 
-  // Keep polygons / lines
-  const filtered = {
-    type: "FeatureCollection",
-    features: allGeoJSON.features.filter((f) =>
-      ["Polygon", "Rectangle", "LineString"].includes(f.geometry.type)
-    ),
+    // Keep polygons / lines
+    const filtered = {
+      type: "FeatureCollection",
+      features: allGeoJSON.features.filter((f) =>
+        ["Polygon", "Rectangle", "LineString"].includes(f.geometry.type)
+      ),
+    };
+
+    if (filtered.features.length === 0) {
+      alert("Export karne ke liye koi Polygon ya Line draw nahin kiya gaya hai.");
+      return;
+    }
+
+    // Generate base KML
+    let kml = tokml(filtered);
+
+    // ---------------------------
+    // 🔵 BLUE STYLING FOR KML
+    // Leaflet blue = #4F46E5
+    // Fill opacity 0.1 => alpha hex = 19
+    // KML format = AABBGGRR
+    //
+    // stroke = FF E5 46 4F  => FFE5464F
+    // fill   = 19 E5 46 4F  => 19E5464F
+    // ---------------------------
+
+    const styleBlock = `
+      <Style id="bluePolygon">
+        <LineStyle>
+          <color>FFE5464F</color>   <!-- Blue stroke -->
+          <width>2</width>
+        </LineStyle>
+        <PolyStyle>
+          <color>80E5464F</color>   <!-- Blue fill with opacity ~50% -->
+          <fill>1</fill>
+          <outline>1</outline>
+        </PolyStyle>
+      </Style>
+    `;
+
+    // Insert style inside <Document>
+    kml = kml.replace(/<Document([^>]*)>/i, `<Document$1>${styleBlock}`);
+
+    // Attach style to each Placemark
+    kml = kml.replace(/<Placemark>/g, `<Placemark>\n<styleUrl>#bluePolygon</styleUrl>`);
+
+    // Download final styled KML
+    const blob = new Blob([kml], {
+      type: "application/vnd.google-earth.kml+xml",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "drawn_boundary.kml";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
-
-  if (filtered.features.length === 0) {
-    alert("Export karne ke liye koi Polygon ya Line draw nahin kiya gaya hai.");
-    return;
-  }
-
-  // Generate base KML
-  let kml = tokml(filtered);
-
-  // ---------------------------
-  // 🔵 BLUE STYLING FOR KML
-  // Leaflet blue = #4F46E5
-  // Fill opacity 0.1 => alpha hex = 19
-  // KML format = AABBGGRR
-  //
-  // stroke = FF E5 46 4F  => FFE5464F
-  // fill   = 19 E5 46 4F  => 19E5464F
-  // ---------------------------
-
-  const styleBlock = `
-    <Style id="bluePolygon">
-      <LineStyle>
-        <color>FFE5464F</color>   <!-- Blue stroke -->
-        <width>2</width>
-      </LineStyle>
-      <PolyStyle>
-        <color>80E5464F</color>   <!-- Blue fill with opacity 0.1 -->
-        <fill>1</fill>
-        <outline>1</outline>
-      </PolyStyle>
-    </Style>
-  `;
-
-  // Insert style inside <Document>
-  kml = kml.replace(/<Document([^>]*)>/i, `<Document$1>${styleBlock}`);
-
-  // Attach style to each Placemark
-  kml = kml.replace(/<Placemark>/g, `<Placemark>\n<styleUrl>#bluePolygon</styleUrl>`);
-
-  // Download final styled KML
-  const blob = new Blob([kml], {
-    type: "application/vnd.google-earth.kml+xml",
-  });
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "drawn_boundary.kml";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
-
-
 
   return (
     <div className="map-container">

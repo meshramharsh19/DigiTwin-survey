@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save, X } from 'lucide-react';
-import '../Style/HouseDetailsModal.css'; 
+import '../Style/HouseDetailsModal.css';
 
 const initialState = {
   propertyNumber: '',
@@ -9,7 +9,7 @@ const initialState = {
   oldAssessmentYear: '',
   ownerName: '',
   ownerUID: '',
-  ownerType: 'Private', 
+  ownerType: 'Private',
   occupierName: '',
   occupierUID: '',
   propertyAddress: '',
@@ -17,19 +17,19 @@ const initialState = {
   pinCode: '',
   latitude: '',
   longitude: '',
-  propertyCategory: 'Owner', 
-  natureOfProperty: 'Individual', 
-  usageOfProperty: 'Residential', 
+  propertyCategory: 'Owner',
+  natureOfProperty: 'Individual',
+  usageOfProperty: 'Residential',
   ageOfBuilding: '',
   mobileNumber: '',
   email: '',
   yearOfConstruction: '',
   floorNumber: '',
   floorArea: '',
-  floorConstructionType: 'RCC structure', 
-  floorUseType: 'Residential', 
+  totalArea: '',
+  floorConstructionType: 'RCC structure',
+  floorUseType: 'Residential',
   shopOfficeNumber: '',
-  
   photos: null,
 };
 
@@ -46,22 +46,170 @@ export default function HouseDetailsModal({ isOpen, onClose, onSave, capturedLoc
     }
   }, [capturedLocation]);
 
+  const sanitizeDigits = (val) => {
+    // remove non-digits
+    return val.replace(/\D+/g, '');
+  };
+
+  const sanitizeOwnerName = (val) => {
+    // allow letters, spaces, dot, hyphen and apostrophe — strip digits and other weird characters
+    return val.replace(/[^A-Za-z\s.'-]/g, '');
+  };
+
   const handleChange = (e) => {
     const { name, value, type } = e.target;
+
     if (type === 'file') {
       setFormData(prev => ({ ...prev, [name]: e.target.files }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      return;
     }
+
+    let newVal = value;
+
+    switch (name) {
+      // numeric-only fields (integers)
+      case 'propertyNumber':
+      case 'oldAssessmentValue':
+      case 'totalArea':
+      case 'floorArea':
+      case 'floorNumber':
+      case 'shopOfficeNumber':
+        newVal = sanitizeDigits(value);
+        break;
+
+      case 'pinCode':
+        newVal = sanitizeDigits(value).slice(0, 6); // max 6 digits
+        break;
+
+      case 'ageOfBuilding':
+        newVal = sanitizeDigits(value).slice(0, 2); // max 2 digits
+        break;
+
+      case 'mobileNumber':
+        newVal = sanitizeDigits(value).slice(0, 10); // max 10 digits
+        break;
+
+      case 'assessmentYear':
+      case 'oldAssessmentYear':
+        newVal = sanitizeDigits(value).slice(0, 4); // only digits, max 4
+        break;
+
+      case 'ownerName':
+        newVal = sanitizeOwnerName(value);
+        break;
+
+      case 'ownerUID':
+      case 'occupierUID':
+        // allow alphanumeric but keep as-is; placeholder handled in JSX
+        newVal = value;
+        break;
+
+      case 'email':
+        newVal = value;
+        break;
+
+      default:
+        // leave other fields unchanged
+        newVal = value;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: newVal }));
+  };
+
+  const validateBeforeSave = (data) => {
+    // Required basic checks
+    if (!data.ownerName || !data.propertyAddress) {
+      alert('Please fill in required fields: Owner Name and Address.');
+      return false;
+    }
+
+    // Owner name should be alphabetic (at least one letter)
+    if (!/[A-Za-z]/.test(data.ownerName)) {
+      alert('Owner name must contain alphabetic characters only.');
+      return false;
+    }
+
+    // assessment years must be 4 digits if provided
+    if (data.assessmentYear && data.assessmentYear.length !== 4) {
+      alert('Assessment Year must be 4 digits (e.g., 2024).');
+      return false;
+    }
+    if (data.oldAssessmentYear && data.oldAssessmentYear.length !== 4) {
+      alert('Old Assessment Year must be 4 digits (e.g., 2020).');
+      return false;
+    }
+
+    // mobile number must be exactly 10 digits if provided
+    if (data.mobileNumber && data.mobileNumber.length !== 10) {
+      alert('Mobile number must be exactly 10 digits.');
+      return false;
+    }
+
+    // pinCode max 6 digits if provided
+    if (data.pinCode && data.pinCode.length > 6) {
+      alert('Postal Pin code cannot be more than 6 digits.');
+      return false;
+    }
+
+    // age of building max 2 digits if provided
+    if (data.ageOfBuilding && (isNaN(Number(data.ageOfBuilding)) || data.ageOfBuilding.length > 2)) {
+      alert('Age of Building must be a number with up to 2 digits.');
+      return false;
+    }
+
+    // totalArea and oldAssessmentValue and propertyNumber should be numeric when provided
+    const numericFields = ['propertyNumber', 'oldAssessmentValue', 'totalArea', 'floorArea', 'floorNumber', 'shopOfficeNumber'];
+    for (const f of numericFields) {
+      if (data[f] && !/^\d+$/.test(String(data[f]))) {
+        alert(`${f} must contain digits only.`);
+        return false;
+      }
+    }
+    
+    // email basic check when provided
+    if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      alert('Please enter a valid email address.');
+      return false;
+    }
+
+    return true;
   };
 
   const handleSaveClick = () => {
-    if (!formData.ownerName || !formData.propertyAddress) {
-      alert('Please fill in required fields like Owner Name and Address.');
-      return;
+    // run validation
+    if (!validateBeforeSave(formData)) return;
+
+    // prepare final data: convert appropriate fields to numbers (as user requested digits)
+    const finalData = { ...formData };
+
+    // fields to convert to numbers (if not empty)
+    const integerFields = [
+      'propertyNumber',
+      'oldAssessmentValue',
+      'totalArea',
+      'floorArea',
+      'floorNumber',
+      'shopOfficeNumber',
+      'ageOfBuilding',
+      'assessmentYear',
+      'oldAssessmentYear',
+    ];
+
+    integerFields.forEach((f) => {
+      if (finalData[f] !== '' && finalData[f] !== null && finalData[f] !== undefined) {
+        // parseInt will convert "012" -> 12; if you want to preserve leading zeros (e.g., pin code), do not convert
+        finalData[f] = parseInt(finalData[f], 10);
+      }
+    });
+
+    // mobileNumber keep as string of digits (but validated)
+    // pinCode: preserve as string (to keep leading zeros) but ensure digits
+    if (finalData.pinCode !== '' && finalData.pinCode !== null && finalData.pinCode !== undefined) {
+      finalData.pinCode = String(finalData.pinCode);
     }
-    onSave(formData);
-    setFormData(initialState); 
+
+    onSave(finalData);
+    setFormData(initialState);
     onClose();
   };
 
@@ -81,34 +229,70 @@ export default function HouseDetailsModal({ isOpen, onClose, onSave, capturedLoc
             <div className="form-grid-2">
               <div className="form-group">
                 <label>Property Number</label>
-                <input name="propertyNumber" value={formData.propertyNumber} onChange={handleChange} />
+                <input
+                  name="propertyNumber"
+                  value={formData.propertyNumber}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  pattern="\d*"
+                  placeholder=""
+                />
               </div>
               <div className="form-group">
                 <label>Assessment Year</label>
-                <input name="assessmentYear" value={formData.assessmentYear} onChange={handleChange} />
+                <input
+                  name="assessmentYear"
+                  value={formData.assessmentYear}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="e.g., 2024"
+                />
               </div>
               <div className="form-group">
                 <label>Old Assessment Value</label>
-                <input name="oldAssessmentValue" value={formData.oldAssessmentValue} onChange={handleChange} />
+                <input
+                  name="oldAssessmentValue"
+                  value={formData.oldAssessmentValue}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  pattern="\d*"
+                />
               </div>
               <div className="form-group">
                 <label>Old Assessment Year</label>
-                <input name="oldAssessmentYear" value={formData.oldAssessmentYear} onChange={handleChange} />
+                <input
+                  name="oldAssessmentYear"
+                  value={formData.oldAssessmentYear}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="e.g., 2020"
+                />
               </div>
             </div>
           </fieldset>
 
-          
           <fieldset>
             <legend>Owner & Occupier Details</legend>
             <div className="form-grid-2">
               <div className="form-group">
                 <label>Property Owner Name (M)</label>
-                <input name="ownerName" value={formData.ownerName} onChange={handleChange} required />
+                <input
+                  name="ownerName"
+                  value={formData.ownerName}
+                  onChange={handleChange}
+                  required
+                />
               </div>
               <div className="form-group">
                 <label>Owner UID (M)</label>
-                <input name="ownerUID" value={formData.ownerUID} onChange={handleChange} />
+                <input
+                  name="ownerUID"
+                  value={formData.ownerUID}
+                  onChange={handleChange}
+                  placeholder="remaining"
+                />
               </div>
               <div className="form-group">
                 <label>Type of Owner (M)</label>
@@ -129,12 +313,16 @@ export default function HouseDetailsModal({ isOpen, onClose, onSave, capturedLoc
               </div>
               <div className="form-group">
                 <label>Occupier UID (M)</label>
-                <input name="occupierUID" value={formData.occupierUID} onChange={handleChange} />
+                <input
+                  name="occupierUID"
+                  value={formData.occupierUID}
+                  onChange={handleChange}
+                  placeholder="remaining"
+                />
               </div>
             </div>
           </fieldset>
 
-          
           <fieldset>
             <legend>Property Address & Location</legend>
             <div className="form-group">
@@ -148,7 +336,14 @@ export default function HouseDetailsModal({ isOpen, onClose, onSave, capturedLoc
               </div>
               <div className="form-group">
                 <label>Postal Pin code (M)</label>
-                <input name="pinCode" value={formData.pinCode} onChange={handleChange} />
+                <input
+                  name="pinCode"
+                  value={formData.pinCode}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder=""
+                />
               </div>
               <div className="form-group">
                 <label>Latitude (M) (Auto-filled)</label>
@@ -160,12 +355,11 @@ export default function HouseDetailsModal({ isOpen, onClose, onSave, capturedLoc
               </div>
             </div>
           </fieldset>
-          
-          
+
           <fieldset>
             <legend>Property Classification</legend>
-             <div className="form-grid-3">
-               <div className="form-group">
+            <div className="form-grid-3">
+              <div className="form-group">
                 <label>Category of Property (M)</label>
                 <select name="propertyCategory" value={formData.propertyCategory} onChange={handleChange}>
                   <option>Owner</option>
@@ -206,42 +400,91 @@ export default function HouseDetailsModal({ isOpen, onClose, onSave, capturedLoc
           <fieldset>
             <legend>Building Details</legend>
             <div className="form-grid-2">
-               <div className="form-group">
+              <div className="form-group">
                 <label>Age of Building (M)</label>
-                <input name="ageOfBuilding" type="number" value={formData.ageOfBuilding} onChange={handleChange} />
+                <input
+                  name="ageOfBuilding"
+                  type="text"
+                  value={formData.ageOfBuilding}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  maxLength={2}
+                  placeholder=""
+                />
               </div>
-               <div className="form-group">
+              <div className="form-group">
                 <label>Year of Construction (M)</label>
-                <input name="yearOfConstruction" type="number" placeholder="e.g., 2010" value={formData.yearOfConstruction} onChange={handleChange} />
+                <input
+                  name="yearOfConstruction"
+                  type="number"
+                  placeholder="e.g., 2010"
+                  value={formData.yearOfConstruction}
+                  onChange={handleChange}
+                />
               </div>
               <div className="form-group">
                 <label>Total Carpet/Built-up Area (M)</label>
-                <input name="totalArea" type="number" placeholder="in Sq. Meter" value={formData.totalArea} onChange={handleChange} />
+                <input
+                  name="totalArea"
+                  type="text"
+                  placeholder="in Sq. Meter"
+                  value={formData.totalArea}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                />
               </div>
               <div className="form-group">
                 <label>Mobile Number (Optional)</label>
-                <input name="mobileNumber" type="tel" value={formData.mobileNumber} onChange={handleChange} />
+                <input
+                  name="mobileNumber"
+                  type="text"
+                  value={formData.mobileNumber}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="10 digits"
+                />
               </div>
               <div className="form-group">
-                <label>E-mail ID (Optional)</label>
+                <label>E-mail ID (Optional) — @email.com</label>
                 <input name="email" type="email" value={formData.email} onChange={handleChange} />
               </div>
             </div>
           </fieldset>
+
           <fieldset>
             <legend>Floor Details (Add for each floor)</legend>
             <div className="form-grid-3">
               <div className="form-group">
                 <label>Floor Number (M)</label>
-                <input name="floorNumber" type="number" placeholder="e.g., 0 for Ground" value={formData.floorNumber} onChange={handleChange} />
+                <input
+                  name="floorNumber"
+                  type="text"
+                  placeholder="e.g., 0 for Ground"
+                  value={formData.floorNumber}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                />
               </div>
               <div className="form-group">
                 <label>Floor Area (M)</label>
-                <input name="floorArea" type="number" placeholder="in Sq. Meter" value={formData.floorArea} onChange={handleChange} />
+                <input
+                  name="floorArea"
+                  type="text"
+                  placeholder="in Sq. Meter"
+                  value={formData.floorArea}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                />
               </div>
-               <div className="form-group">
+              <div className="form-group">
                 <label>Shop / Office No. (M)</label>
-                <input name="shopOfficeNumber" value={formData.shopOfficeNumber} onChange={handleChange} />
+                <input
+                  name="shopOfficeNumber"
+                  value={formData.shopOfficeNumber}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                />
               </div>
               <div className="form-group">
                 <label>Floor Construction (M)</label>
@@ -264,10 +507,8 @@ export default function HouseDetailsModal({ isOpen, onClose, onSave, capturedLoc
                 </select>
               </div>
             </div>
-            
           </fieldset>
-          
-        
+
           <fieldset>
             <legend>Attachments</legend>
             <div className="form-group">
@@ -285,6 +526,6 @@ export default function HouseDetailsModal({ isOpen, onClose, onSave, capturedLoc
           </button>
         </div>
       </div>
-    </div>
-  );
+    </div>
+  );
 }
