@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // If behind a proxy/NGINX that terminates TLS, enable this so req.protocol reflects original protocol
 // app.set('trust proxy', true);

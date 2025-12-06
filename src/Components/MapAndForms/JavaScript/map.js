@@ -11,7 +11,17 @@
 
 // import '../Style/map.css';
 // import HouseDetailsModal from './HouseDetailsModal';
-
+// Socket.io client setup
+// const socket = io('http://localhost:5000'); // change origin in prod
+//   socket.on('connect', () => console.log('connected', socket.id));
+//   socket.on('survey:created', (data) => {
+//     console.log('New survey created:', data);
+//     // e.g. re-fetch /api/get-surveys or update map
+//   });
+//   socket.on('survey:updated', (data) => {
+//     console.log('Survey updated:', data);
+//     // update styles on map
+//   });
 // /*
 //   Color map for usage -> used to style polygons on map and in exported KML.
 //   Modify these hex values as desired.
