@@ -12,7 +12,7 @@
 // import '../Style/map.css';
 // import HouseDetailsModal from './HouseDetailsModal';
 // Socket.io client setup
-// const socket = io('http://localhost:5000'); // change origin in prod
+// const socket = io('http://localhost:5001'); // change origin in prod
 //   socket.on('connect', () => console.log('connected', socket.id));
 //   socket.on('survey:created', (data) => {
 //     console.log('New survey created:', data);
@@ -354,7 +354,7 @@
 //     }
 
 //     // send to backend
-//     fetch('http://localhost:5000/api/save-survey', {
+//     fetch('http://localhost:5001/api/save-survey', {
 //       method: 'POST',
 //       headers: {
 //         'Content-Type': 'application/json',
@@ -624,7 +624,7 @@ import '../Style/map.css';
 import HouseDetailsModal from './HouseDetailsModal';
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 // Socket.io client setup
-const socket = io('http://localhost:5000'); // change origin in prod
+const socket = io('http://localhost:5001'); // change origin in prod
   socket.on('connect', () => console.log('connected', socket.id));
   socket.on('survey:created', (data) => {
     console.log('New survey created:', data);
@@ -1004,7 +1004,7 @@ L.tileLayer(
     }
 
     // send to backend
-    fetch('http://localhost:5000/api/save-survey', {
+    fetch('http://localhost:5001/api/save-survey', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

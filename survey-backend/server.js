@@ -430,10 +430,52 @@ try {
 // Emit realtime event to connected clients (if socket initialized)
 try {
   const io = req.app?.locals?.io; // we set this when initializing socket
-  if (io) io.emit('survey:created', savedSurvey);
+
+  if (io) {
+    // 1) keep old event (for admin / logs etc.)
+    io.emit('survey:created', savedSurvey);
+
+    // 2) send a 3D-ready GeoJSON Feature for your 3D platform
+    let geometry = null;
+
+    // If we had polygonGeoJson in this request, reuse it
+    if (polygonGeoJson) {
+      geometry = {
+        type: polygonGeoJson.type || 'Polygon',
+        coordinates: polygonGeoJson.coordinates
+      };
+    } else if (savedSurvey.location && Array.isArray(savedSurvey.location.coordinates)) {
+      geometry = { type: 'Point', coordinates: savedSurvey.location.coordinates };
+    } else if (Array.isArray(savedSurvey.centroid)) {
+      geometry = { type: 'Point', coordinates: [savedSurvey.centroid[0], savedSurvey.centroid[1]] };
+    }
+
+    const featureFor3D = {
+      type: 'Feature',
+      geometry,
+      properties: {
+        _id: savedSurvey._id,
+        propertyNumber: savedSurvey.propertyNumber,
+        propertyName: savedSurvey.propertyName,
+        ownerName: savedSurvey.ownerName,
+        usageOfProperty: savedSurvey.usageOfProperty,
+        propertyAddress: savedSurvey.propertyAddress,
+        style: savedSurvey.style || { color: '#00BFFF', opacity: 0.5 },
+        kmlUrl: savedSurvey.kmlUrl || null,
+        totalArea: savedSurvey.totalArea,
+        yearOfConstruction: savedSurvey.yearOfConstruction,
+        mobileNumber: savedSurvey.mobileNumber,
+        email: savedSurvey.email,
+        createdAt: savedSurvey.createdAt
+      }
+    };
+
+    io.emit('3d:survey:new', featureFor3D);   // 🔔 MAIN EVENT FOR 3D PLATFORM
+  }
 } catch (e) {
   console.warn('Socket emit failed:', e?.message || e);
 }
+
 
 // Publish on redis channel (optional, for external subsystems)
 try {
