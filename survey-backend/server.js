@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const RoadSurvey = require('./model/RoadSurvey'); // import RoadSurvey model
+
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -13,6 +15,7 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // increase if KML / payloads are big
 app.use(express.urlencoded({ extended: true }));
+app.use("/videos", express.static("videos"));
 
 // --- MongoDB Connection ---
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/survey';
@@ -502,6 +505,83 @@ try {
   }
 });
 
+app.post("/api/road-survey/save", async (req, res) => {
+  try {
+    const { polygons, kmlData, hasVideo, videoUrl, createdFrom } = req.body;
+
+    if (
+      !polygons ||
+      polygons.type !== "FeatureCollection" ||
+      polygons.features.length === 0
+    ) {
+      return res.status(400).json({ message: "Polygon data required" });
+    }
+
+    const feature = polygons.features[0];
+    const geometry = feature.geometry;
+
+    // centroid calculation (simple)
+    const coords = geometry.coordinates[0];
+    let sumLng = 0, sumLat = 0;
+    coords.forEach(([lng, lat]) => {
+      sumLng += lng;
+      sumLat += lat;
+    });
+    const centroid = [
+      sumLng / coords.length,
+      sumLat / coords.length
+    ];
+
+   // 1️⃣ upload KML to GridFS
+let kmlFileId = null;
+let kmlUrl = null;
+
+if (kmlData) {
+  const fileName = `road-survey-${Date.now()}.kml`;
+  kmlFileId = await uploadKmlToGridFS(fileName, kmlData);
+  kmlUrl = `${req.protocol}://${req.headers.host}/api/kml/public/${kmlFileId}`;
+}
+
+// 2️⃣ save RoadSurvey with KML URL
+const roadSurvey = await RoadSurvey.create({
+  geometry,
+  centroid,
+  kmlData,
+  kmlFileId,
+  kmlUrl,
+  hasVideo,
+  videoUrl,
+  createdFrom
+});
+
+
+    // 🔔 realtime emit (PART-2 ready)
+    const io = req.app.locals.io;
+    if (io) {
+      io.emit("3d:road:new", {
+        type: "Feature",
+        geometry,
+        properties: {
+          _id: roadSurvey._id,
+          videoUrl: roadSurvey.videoUrl,
+          hasVideo: roadSurvey.hasVideo,
+          centroid: roadSurvey.centroid
+        }
+      });
+    }
+
+    res.status(201).json({
+      message: "Road survey saved",
+      data: roadSurvey
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Road survey save failed" });
+  }
+});
+
+
 
 
 // ---------------------------------------------------------------------------
@@ -652,6 +732,8 @@ app.get('/api/3d/surveys', async (req, res) => {
   }
 });
 
+
+
 app.get('/api/3d/surveys/:id', async (req, res) => {
   try {
     const d = await SurveyEntry.findById(req.params.id).lean();
@@ -687,6 +769,33 @@ app.get('/api/3d/surveys/:id', async (req, res) => {
   } catch (err) {
     console.error('GET /api/3d/surveys/:id error:', err);
     res.status(500).json({ error: 'internal' });
+  }
+});
+
+// ------------------ GET ROAD SURVEYS (FOR 3D PLATFORM) ------------------
+app.get("/api/road-surveys", async (req, res) => {
+  try {
+    const roads = await RoadSurvey.find({}).lean();
+
+    const features = roads.map(r => ({
+      type: "Feature",
+      geometry: r.geometry,
+      properties: {
+        _id: r._id,
+        hasVideo: r.hasVideo,
+        videoUrl: "http://localhost:5001/videos/roadPolygon.mp4", //r.videoUrl,
+        centroid: r.centroid,
+        createdFrom: r.createdFrom
+      }
+    }));
+
+    res.json({
+      type: "FeatureCollection",
+      features
+    });
+  } catch (err) {
+    console.error("GET /api/road-surveys error:", err);
+    res.status(500).json({ message: "Failed to load road surveys" });
   }
 });
 

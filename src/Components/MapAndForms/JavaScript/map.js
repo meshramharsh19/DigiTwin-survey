@@ -456,6 +456,50 @@
 //     URL.revokeObjectURL(url);
 //   };
 
+//   const handleProceedPolygonSurvey = () => {
+//   if (!drawnItemsRef.current) {
+//     alert("Please draw a polygon first");
+//     return;
+//   }
+
+//   const polygonsGeoJSON = collectPolygonsGeoJSON();
+
+//   if (!polygonsGeoJSON || polygonsGeoJSON.features.length === 0) {
+//     alert("No polygon found");
+//     return;
+//   }
+
+//   // KML generate (same logic as download but no file)
+//   const kmlString = tokml(polygonsGeoJSON);
+
+//   const payload = {
+//     layerType: "road",
+//     polygons: polygonsGeoJSON,
+//     kmlData: kmlString,
+//     hasVideo: true,
+//     videoUrl: "/videos/road-survey.mp4", // future use (PART-2)
+//     createdFrom: "digital-twin",
+//   };
+
+//   fetch("http://localhost:5001/api/road-survey/save", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify(payload),
+//   })
+//     .then((res) => res.json())
+//     .then((data) => {
+//       alert("Polygon survey saved successfully");
+//       console.log("Saved polygon:", data);
+//     })
+//     .catch((err) => {
+//       console.error(err);
+//       alert("Failed to save polygon survey");
+//     });
+// };
+
+
 //   return (
 //     <div className="map-container">
 //       <div className="map-content">
@@ -544,6 +588,15 @@
 //                     <CheckSquare size={18} /> Proceed to Survey (Point)
 //                   </button>
                   
+//                   {/* --- new btn for road/polygon survey --- */}
+// <button
+ // onClick={handleProceedPolygonSurvey}
+  //className="proceed-button"
+ // style={{ backgroundColor: '#4CAF50', marginTop: '10px' }}
+//>
+ // <CheckSquare size={18} /> Proceed to Survey (Polygon)
+//</button>
+
 //                   {/* --- NAYA BUTTON (Polygon download ke liye) --- */}
 //                   <button
 //                     onClick={handleDownloadDrawnKML}
@@ -1106,6 +1159,55 @@ L.tileLayer(
     URL.revokeObjectURL(url);
   };
 
+ const handleProceedPolygonSurvey = () => {
+  if (!drawnItemsRef.current) {
+    alert("Please draw a polygon first");
+    return;
+  }
+
+  const polygonsGeoJSON = collectPolygonsGeoJSON();
+
+  if (!polygonsGeoJSON || polygonsGeoJSON.features.length === 0) {
+    alert("No polygon found");
+    return;
+  }
+
+  const kmlString = tokml(polygonsGeoJSON);
+
+  const payload = {
+    layerType: "road",
+    polygons: polygonsGeoJSON,
+    kmlData: kmlString,
+    hasVideo: true,
+    // videoUrl: "/videos/road-survey.mp4",
+    createdFrom: "digital-twin",
+  };
+
+  fetch("http://localhost:5001/api/road-survey/save", {
+  // ✅ ONLY THIS CHANGE
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  })
+    .then(async (res) => {
+      const json = await res.json();
+      if (!res.ok) throw json;
+      return json;
+    })
+    .then((data) => {
+      alert("Polygon survey saved successfully");
+      console.log("Saved polygon:", data);
+    })
+    .catch((err) => {
+      console.error(err);
+      alert("Failed to save polygon survey");
+    });
+};
+
+
+
   return (
     <div className="map-container">
       <div className="map-content">
@@ -1193,6 +1295,15 @@ L.tileLayer(
                   >
                     <CheckSquare size={18} /> Proceed to Survey (Point)
                   </button>
+{/* --- New btn for road survey --- */}
+                  <button
+  onClick={handleProceedPolygonSurvey}
+  className="proceed-button"
+  style={{ backgroundColor: '#4CAF50', marginTop: '10px' }}
+>
+  <CheckSquare size={18} /> Proceed to Survey (Polygon)
+</button>
+
 
                   {/* --- NAYA BUTTON (Polygon download ke liye) --- */}
                   <button
