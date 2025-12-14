@@ -783,7 +783,7 @@ app.get("/api/road-surveys", async (req, res) => {
       properties: {
         _id: r._id,
         hasVideo: r.hasVideo,
-        videoUrl: "http://localhost:5001/videos/roadPolygon.mp4", //r.videoUrl,
+        videoUrl: "http://13.127.220.89:8083/watch.html",
         centroid: r.centroid,
         createdFrom: r.createdFrom
       }
