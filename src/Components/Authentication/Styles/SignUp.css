@@ -1,18 +1,19 @@
 /* Base */
 .signup-container {
-  min-height: 100vh;
+  height: 100vh;      /* 🔑 lock to viewport */
   display: flex;
 }
 
+
 /* Signup Side */
 .signup-side {
-  width: 100%;
+  width: 50%;            /* 🔑 split screen */
+  height: 100vh;         /* 🔑 lock height */
   background: white;
   display: flex;
-  align-items: center;
   justify-content: center;
   padding: 2rem;
-  overflow-y: auto;
+  overflow-y: auto;      /* ✅ scroll only left side */
 }
 
 .signup-form-container {
@@ -90,16 +91,14 @@
   position: relative;
 }
 
-.input-icon {
-  position: absolute;
-  top: 0;
-  left: 0;
-  padding-left: 1rem;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  pointer-events: none;
+.has-eye {
+  padding-right: 3rem;
 }
+
+.input-icon {
+  display: none;
+}
+
 
 .icon {
   width: 1.25rem;
@@ -109,7 +108,7 @@
 
 .input {
   width: 100%;
-  padding-left: 3rem;
+  padding-left: 1rem;
   padding-right: 1rem;
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
@@ -129,16 +128,16 @@
 
 .password-toggle {
   position: absolute;
-  top: 0;
-  right: 0;
-  padding-right: 1rem;
-  display: flex;
-  align-items: center;
-  height: 100%;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
+  color: #94a3b8;
+  padding: 0;
 }
+
 
 .terms {
   display: flex;
@@ -326,13 +325,48 @@
 @media (min-width: 1024px) {
   .signup-side {
     width: 50%;
+    height: 100vh;
   }
+
   .hero-side {
     display: flex;
     width: 50%;
-    background: linear-gradient(to bottom right, #eff6ff, #d1fae5, #ccfbf1);
+    height: 100vh;             /* 🔑 REQUIRED */
+    background: linear-gradient(to bottom right, #eff6ff, #e0f2fe);
     align-items: center;
     justify-content: center;
     padding: 3rem;
+    overflow: hidden;          /* 🔑 REQUIRED */
   }
 }
+
+/* ----------------------------- */
+/* Hide scrollbar but keep scroll */
+/* ----------------------------- */
+
+.signup-side {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* IE & Edge */
+}
+
+.signup-side::-webkit-scrollbar {
+  display: none;              /* Chrome, Safari */
+}
+
+.form-error {
+  margin-top: 0.75rem;
+  color: #dc2626; /* red */
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.form-success {
+  margin-top: 0.75rem;
+  color: #16a34a; /* green */
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+

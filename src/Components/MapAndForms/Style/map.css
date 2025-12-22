@@ -1,15 +1,20 @@
 /* Base */
 .map-container {
-  min-height: 100vh;
+  height: 100vh;          /* FIXED height */
+  overflow: hidden;       /* no page scroll */
   background: linear-gradient(to bottom right, #f8fafc, #f0f7ff, #e6fcf5);
-  padding: 1.5rem;
+  padding: 1rem;          /* reduced padding */
 }
 
+
 .map-content {
-  max-width: 80rem;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 100%;
+  height: calc(100vh - 2rem); /* account for padding */
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
+
 
 /* Animation */
 @keyframes fadeIn {
@@ -36,75 +41,28 @@
   animation-delay: 0.1s; /* Will fade in with card */
 }
 
-/* Header */
-.map-header {
-  background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07),
-    0 2px 4px -2px rgba(0, 0, 0, 0.04);
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #e2e8f0;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  /* Button is gone, so just start */
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.header-logo {
-  display: flex;
-  align-items: center;
-}
-
-.logo-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  background: #eff6ff;
-  border-radius: 0.5rem;
-}
-
-.logo-svg {
-  width: 1.5rem;
-  height: 1.5rem;
-  color: #2563eb;
-}
-
-.logo-text {
-  margin-left: 1rem;
-}
-
-.logo-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.logo-subtitle {
-  font-size: 0.875rem;
-  color: #64748b;
-}
 
 /* --- NEW: Main Layout Styles --- */
 .main-layout-container {
   display: grid;
-  /* Mobile: 1 column */
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
+  grid-template-columns: auto 1fr;
+  gap: 1.25rem;
+  height: 100%;
+  overflow: hidden;
 }
+
 
 .layout-left {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  align-items: center;
+  gap: 1.25rem;
+  overflow-y: auto;     /* 🔥 internal scroll only */
+  max-height: 100%;
 }
+
+
+
 
 .layout-right {
   /* This will contain the map wrapper */
@@ -116,29 +74,27 @@
 @media (min-width: 768px) { 
   .main-layout-container {
     /* 1 part for details, 2 parts for map */
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: auto 1fr;  /* 🔥 KEY CHANGE */
+    align-items: center;
   }
 
   .layout-right {
-    /* Make map wrapper fill the column height */
-    height: 100%;
+    min-height: calc(100vh - 8rem);
   }
 
-  .map-wrapper {
-    /* Make map wrapper fill the column height */
-    height: 100%;
-  }
+ .map-wrapper {
+  height: 100%;
+}
 
-  .map {
-    /* Make map fill the wrapper height */
-    height: 100%;
-    min-height: 37.5rem; /* Ensure it's not too small */
-  }
+.map {
+  height: 100%;
+  min-height: unset;   /* 🔥 remove fixed height */
+}
 
   .map-loading,
   .map-error {
     height: 100%;
-    min-height: 37.5rem;
+    min-height: calc(100vh - 8rem);
   }
 }
 
@@ -148,8 +104,10 @@
   border-radius: 0.75rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07),
     0 2px 4px -2px rgba(0, 0, 0, 0.04);
-  padding: 1.5rem;
+  padding: 1.25rem;
   border: 1px solid #e2e8f0;
+  width: 100%;
+  max-width: 520px; /* controls card width */
 }
 
 /* NEW: Header for Title + Refresh Button */
@@ -198,7 +156,7 @@
   display: grid;
   /* Now defaults to 2 columns */
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 0.875rem;
 }
 
 /* On small mobile, stack to 1 column */
@@ -632,3 +590,39 @@
   background: #1d4ed8;
 }
 
+
+
+/* 🔐 Logout button inside map (professional style) */
+.map-wrapper {
+  position: relative; /* REQUIRED for absolute positioning */
+}
+
+.map-logout-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1000;
+
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+
+  background: #16a34a; /* professional green (matches GIS theme) */
+  color: #ffffff;
+
+  border: none;
+  border-radius: 999px; /* pill shape */
+  cursor: pointer;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease-in-out;
+}
+
+.map-logout-btn:hover {
+  background: #15803d; /* darker green on hover */
+  transform: translateY(-1px);
+}
+
+.map-logout-btn:active {
+  transform: scale(0.97);
+}

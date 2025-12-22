@@ -19,12 +19,13 @@
 
 /* Login Side */
 .login-side {
-  width: 100%;
+  width: 50%;            /* 🔑 split screen */
+  height: 100vh;         /* 🔑 lock height */
   background: white;
   display: flex;
-  align-items: center;
   justify-content: center;
   padding: 2rem;
+  overflow-y: auto;      /* ✅ scroll only left side */
 }
 
 .login-form-container {
@@ -101,18 +102,23 @@
 
 .input-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
 }
+
 
 .input-icon {
   position: absolute;
-  top: 0;
   left: 0;
-  padding-left: 1rem;
+  width: 3.25rem;              /* FIXED icon column */
   display: flex;
   align-items: center;
-  height: 100%;
+  justify-content: center;
   pointer-events: none;
+  color: #94a3b8;
 }
+
+
 
 .icon {
   width: 1.25rem;
@@ -122,18 +128,16 @@
 
 .input {
   width: 100%;
-  padding-left: 3rem;
-  padding-right: 1rem;
-  padding-top: 0.85rem; /* Slightly more padding */
-  padding-bottom: 0.85rem;
+  padding: 0.85rem 1rem 0.85rem 3.25rem; /* LEFT padding matches icon width */
   border: 1px solid #cbd5e1;
   border-radius: 0.5rem;
   outline: none;
-  transition: all 0.2s ease-in-out; /* Smooth transition */
+  transition: all 0.2s ease-in-out;
   background: white;
   color: #475569;
   font-size: 0.95rem;
 }
+
 
 .input::placeholder {
   color: #94a3b8;
@@ -395,19 +399,48 @@
 
 /* Responsive */
 @media (min-width: 1024px) {
-  .login-side {
+  .login-side  {
     width: 50%;
-    /* Add a subtle shadow separating the panels */
-    box-shadow: 10px 0 25px -10px rgba(0, 0, 0, 0.05);
-    z-index: 10;
+    height: 100vh;
   }
+
   .hero-side {
     display: flex;
     width: 50%;
-    /* New, more professional gradient */
-    background: linear-gradient(to bottom right, #e0f2fe, #f0fdfa);
+    height: 100vh;             /* 🔑 REQUIRED */
+    background: linear-gradient(to bottom right, #eff6ff, #e0f2fe);
     align-items: center;
     justify-content: center;
     padding: 3rem;
+    overflow: hidden;          /* 🔑 REQUIRED */
   }
+}
+
+/* ----------------------------- */
+/* Hide scrollbar but keep scroll */
+/* ----------------------------- */
+
+.login-side {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* IE & Edge */
+}
+
+.login-side::-webkit-scrollbar {
+  display: none;              /* Chrome, Safari */
+}
+
+.form-error {
+  margin-top: 0.75rem;
+  color: #dc2626; /* red */
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.form-success {
+  margin-top: 0.75rem;
+  color: #16a34a; /* green */
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
 }

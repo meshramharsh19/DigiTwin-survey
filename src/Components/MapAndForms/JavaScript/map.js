@@ -675,6 +675,9 @@ import tokml from 'tokml'; // KML export ke liye
 import { io } from 'socket.io-client';
 import '../Style/map.css';
 import HouseDetailsModal from './HouseDetailsModal';
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../Authentication/JavaScript/AuthContext";
+
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 // Socket.io client setup
 const socket = io('http://localhost:5001'); // change origin in prod
@@ -742,6 +745,20 @@ export default function MapComponent() {
 
   // --- NEW: ensure static location only applied once (prevents setLocation loops) ---
   const staticAppliedRef = useRef(false);
+
+  const { isAuthenticated, authLoading, logout } = useAuth();
+  const navigate = useNavigate();
+  const handleLogout = () => {
+  logout();
+  navigate("/", { replace: true });
+};
+
+  // 🔐 HARD AUTH GUARD — cannot be bypassed
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
   // --- helper: ensure a layer stores usage on its feature.properties + options ---
   function setLayerUsageProperty(layer, usage) {
@@ -1207,10 +1224,15 @@ L.tileLayer(
 };
 
 
-
+   // ⛔ BLOCK UI AFTER ALL HOOKS
+  if (authLoading || !isAuthenticated) {
+    return null;
+  }
   return (
     <div className="map-container">
       <div className="map-content">
+        <div className="map-header">
+      </div>
         <div className="main-layout-container">
           <div className="layout-left">
             {location && (
@@ -1321,6 +1343,13 @@ L.tileLayer(
           <div className="layout-right">
             {/* ... (map-wrapper, loading, error, mapRef div... sab waisa hi hai) ... */}
             <div className="map-wrapper fade-in-item">
+            <button
+             className="map-logout-btn"
+              onClick={handleLogout}
+              >
+              Logout
+           </button>
+
               {loading && (
                 <div className="map-loading">
                   <div className="loading-content">

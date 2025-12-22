@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { Map, Lock, User, Eye, EyeOff, Mail, Building, Phone, MapPin, Compass, Globe } from 'lucide-react';
 import '../Styles/SignUp.css';
+import { useNavigate } from 'react-router-dom';
+
 
 export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -14,6 +17,9 @@ export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
 
   const handleChange = (e) => {
     setFormData({
@@ -22,27 +28,57 @@ export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
     });
   };
 
-  const handleSubmit = () => {
-    // Basic validation
-    if (!formData.fullName || !formData.email || !formData.password) {
-      alert('Please fill in all required fields');
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
-    if (!agreeToTerms) {
-      alert('Please agree to Terms & Conditions');
-      return;
-    }
-    console.log('Signup attempted with:', formData);
+  const handleSubmit = async () => {
+  // clear previous messages
+  setError("");
+  setSuccess("");
 
-    // Future mein yaha API call hoga
-    if (onSignup) {
-      onSignup(formData);
+  if (!formData.fullName || !formData.email || !formData.password) {
+    setError("Please fill in all required fields.");
+    return;
+  }
+
+  if (formData.password !== formData.confirmPassword) {
+    setError("Passwords do not match.");
+    return;
+  }
+
+  if (!agreeToTerms) {
+    setError("Please agree to Terms & Conditions.");
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:5001/api/auth/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError(data.message || "Signup failed.");
+      return;
     }
-  };
+
+    setSuccess("Account created successfully! Redirecting to login...");
+
+    setTimeout(() => {
+      navigate("/");
+    }, 1500);
+
+  } catch (error) {
+    console.error("Signup error:", error);
+    setError("Server error. Please try again.");
+  }
+};
 
   return (
     <div className="signup-container">
@@ -71,9 +107,6 @@ export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
                 Full Name *
               </label>
               <div className="input-wrapper">
-                <div className="input-icon">
-                  <User className="icon" strokeWidth={1.5} />
-                </div>
                 <input
                   id="fullName"
                   name="fullName"
@@ -93,9 +126,6 @@ export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
                 Email Address *
               </label>
               <div className="input-wrapper">
-                <div className="input-icon">
-                  <Mail className="icon" strokeWidth={1.5} />
-                </div>
                 <input
                   id="email"
                   name="email"
@@ -115,9 +145,6 @@ export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
                 Phone Number
               </label>
               <div className="input-wrapper">
-                <div className="input-icon">
-                  <Phone className="icon" strokeWidth={1.5} />
-                </div>
                 <input
                   id="phone"
                   name="phone"
@@ -136,9 +163,6 @@ export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
                 Organization
               </label>
               <div className="input-wrapper">
-                <div className="input-icon">
-                  <Building className="icon" strokeWidth={1.5} />
-                </div>
                 <input
                   id="organization"
                   name="organization"
@@ -152,37 +176,35 @@ export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
             </div>
 
             {/* Password Field */}
-            <div className="form-group">
+          <div className="form-group">
               <label htmlFor="password" className="label">
                 Password *
               </label>
-              <div className="input-wrapper">
-                <div className="input-icon">
-                  <Lock className="icon" strokeWidth={1.5} />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="input"
-                  placeholder="Create a strong password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="password-toggle"
-                >
-                  {showPassword ? (
-                    <EyeOff className="icon" strokeWidth={1.5} />
-                  ) : (
-                    <Eye className="icon" strokeWidth={1.5} />
-                  )}
-                </button>
-              </div>
+            <div className="input-wrapper">
+              <input
+             id="password"
+             name="password"
+             type={showPassword ? 'text' : 'password'}
+             value={formData.password}
+             onChange={handleChange}
+             className="input has-eye"
+             placeholder="Create a strong password"
+             required
+             />
+
+             <button
+             type="button"
+             onClick={() => setShowPassword(!showPassword)}
+             className="password-toggle"
+             >
+             {showPassword ? (
+             <EyeOff className="icon" strokeWidth={1.5} />
+             ) : (
+             <Eye className="icon" strokeWidth={1.5} />
+             )}
+             </button>
             </div>
+          </div>
 
             {/* Confirm Password Field */}
             <div className="form-group">
@@ -190,9 +212,6 @@ export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
                 Confirm Password *
               </label>
               <div className="input-wrapper">
-                <div className="input-icon">
-                  <Lock className="icon" strokeWidth={1.5} />
-                </div>
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
@@ -238,6 +257,12 @@ export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
               </label>
             </div>
 
+             {/* Error Message */}
+            {error && <p className="form-error">{error}</p>}
+
+             {/* Success Message */}
+            {success && <p className="form-success">{success}</p>}
+
             {/* Submit Button */}
             <button
               onClick={handleSubmit}
@@ -250,11 +275,12 @@ export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
             <div className="login-link">
               <span className="login-text">Already have an account? </span>
               <button
-                onClick={onSwitchToLogin}
-                className="login-button"
+               onClick={() => navigate('/')}
+               className="login-button"
               >
                 Sign In
               </button>
+
             </div>
           </div>
 

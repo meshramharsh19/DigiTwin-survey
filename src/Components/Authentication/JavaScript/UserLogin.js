@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Map, Lock, User, Eye, EyeOff, MapPin, Compass, Globe } from 'lucide-react';
 import '../Styles/UserLogin.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 
 export default function GISSurveyorLogin() {
@@ -11,11 +12,51 @@ export default function GISSurveyorLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const { login } = useAuth();
 
   const handleSignIn = async () => {
-    navigate('/map');
-  };
+  setError('');
+  setSuccess('');
 
+  if (!email || !password) {
+    setError('Please enter email and password.');
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      "http://localhost:5001/api/auth/login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      }
+    );
+
+    const data = await response.json();
+
+    // ❌ user not registered or wrong password
+    if (!response.ok) {
+      setError(data.message);
+      return;
+    }
+
+    // ✅ user verified by backend
+    login(data.token);
+
+    setSuccess("Login successful!");
+
+    setTimeout(() => {
+      navigate("/map");
+    }, 1000);
+
+  } catch (err) {
+    setError("Server error. Please try again.");
+  }
+};
 
   return (
     <div className="container">
@@ -110,6 +151,12 @@ export default function GISSurveyorLogin() {
               </a>
             </div>
 
+            {/* Error Message */}
+          {error && <p className="form-error">{error}</p>}
+
+           {/* Success Message */}
+          {success && <p className="form-success">{success}</p>}
+
             {/* Submit Button */}
             <button
               onClick={handleSignIn}
@@ -121,9 +168,9 @@ export default function GISSurveyorLogin() {
             {/* Sign Up Link */}
             <div className="sign-up">
               <span className="sign-up-text">Don't have an account? </span>
-              <a href="#" className="sign-up-link">
+              <Link to="/signup" className="sign-up-link">
                 Create an account
-              </a>
+              </Link>
             </div>
           </div>
 

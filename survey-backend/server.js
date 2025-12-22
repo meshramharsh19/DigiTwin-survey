@@ -3,6 +3,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const RoadSurvey = require('./model/RoadSurvey'); // import RoadSurvey model
+const authMiddleware = require('./middleware/authMiddleware');
+const authRoutes = require('./routes/authRoutes');
 
 
 const app = express();
@@ -16,6 +18,9 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' })); // increase if KML / payloads are big
 app.use(express.urlencoded({ extended: true }));
 app.use("/videos", express.static("videos"));
+app.use('/api/auth', authRoutes);
+
+
 
 // --- MongoDB Connection ---
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/survey';
@@ -279,7 +284,7 @@ function buildKmlForParcel({
 // - Accepts survey payload. If polygons/polygon/geometry is present, generate & upload KML.
 // - If frontend supplied kmlData, upload that instead.
 // ---------------------------------------------------------------------------
-app.post('/api/save-survey', async (req, res) => {
+app.post('/api/save-survey', authMiddleware, async (req, res) => {
   try {
     console.log('Received data for "survey" DB:', req.body);
     const data = req.body;
@@ -504,8 +509,8 @@ try {
     res.status(500).json({ message: 'Error saving data', error: error.message });
   }
 });
+app.post("/api/road-survey/save", authMiddleware, async (req, res) => {
 
-app.post("/api/road-survey/save", async (req, res) => {
   try {
     const { polygons, kmlData, hasVideo, videoUrl, createdFrom } = req.body;
 
@@ -801,7 +806,8 @@ app.get("/api/road-surveys", async (req, res) => {
 
 
 // UPDATE polygon color by ID
-app.put('/api/3d/surveys/:id/color', async (req, res) => {
+app.put('/api/3d/surveys/:id/color', authMiddleware, async (req, res) => {
+
   try {
     const { color } = req.body; // new color hex (#FF0000)
     if (!color) return res.status(400).json({ message: "Color is required" });
