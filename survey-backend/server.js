@@ -284,7 +284,7 @@ function buildKmlForParcel({
 // - Accepts survey payload. If polygons/polygon/geometry is present, generate & upload KML.
 // - If frontend supplied kmlData, upload that instead.
 // ---------------------------------------------------------------------------
-app.post('/api/save-survey', authMiddleware, async (req, res) => {
+app.post('/api/save-survey', async (req, res) => {
   try {
     console.log('Received data for "survey" DB:', req.body);
     const data = req.body;
