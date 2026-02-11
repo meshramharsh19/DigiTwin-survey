@@ -1,0 +1,49 @@
+.professional-form {
+    background: #ffffff;
+    border-radius: 8px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #374151;
+}
+
+.full-width {
+    grid-column: span 2;
+}
+
+.tax-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.tax-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.tax-grid div {
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.total-tax {
+    grid-column: span 2;
+    background: #1e40af !important;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+}

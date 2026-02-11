@@ -675,8 +675,16 @@ import tokml from 'tokml'; // KML export ke liye
 import { io } from 'socket.io-client';
 import '../Style/map.css';
 import HouseDetailsModal from './HouseDetailsModal';
+import FormSelectionModal from './FormSelectionModal';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Authentication/JavaScript/AuthContext";
+
+import PropertyDetailsForm from './PropertyDetailsForm';
+import Notice119Form from './Notice119Form';
+import HearingNoticeForm from './HearingNoticeForm';
+import AppealForm from './AppealForm';
+import Namuna43Form from './Namuna43Form';
+
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 // Socket.io client setup
@@ -733,6 +741,8 @@ export default function MapComponent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [formSelectorOpen, setFormSelectorOpen] = useState(false);
+const [selectedForm, setSelectedForm] = useState(null);
   const [capturedLocation, setCapturedLocation] = useState(null);
 
   const mapRef = useRef(null);
@@ -1017,11 +1027,15 @@ L.tileLayer(
   const handleProceedClick = () => {
     if (location) {
       setCapturedLocation(location);
-      setModalOpen(true);
+     setFormSelectorOpen(true); 
     } else {
       alert('Location not available. Please wait or refresh.');
     }
   };
+  const handleFormSelect = (formType) => {
+  setFormSelectorOpen(false);
+  setSelectedForm(formType);
+};
 
   // --- (handleSaveSurvey function) ---
   const handleSaveSurvey = (formData) => {
@@ -1323,7 +1337,7 @@ L.tileLayer(
   className="proceed-button"
   style={{ backgroundColor: '#4CAF50', marginTop: '10px' }}
 >
-  <CheckSquare size={18} /> Proceed to Survey (Polygon)
+  <CheckSquare size={18} /> Proceed to Road Survey
 </button>
 
 
@@ -1389,12 +1403,54 @@ L.tileLayer(
           </div>
         </div>
       </div>
-      <HouseDetailsModal
-        isOpen={isModalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSaveSurvey}
-        capturedLocation={capturedLocation}
-      />
+     {/* Form Selection Modal */}
+<FormSelectionModal
+  isOpen={formSelectorOpen}
+  onClose={() => setFormSelectorOpen(false)}
+  onSelect={handleFormSelect}
+/>
+
+{/* Property Details Form */}
+{selectedForm === "property" && (
+  <PropertyDetailsForm
+    isOpen={true}
+    onClose={() => setSelectedForm(null)}
+    capturedLocation={capturedLocation}
+  />
+)}
+
+{/* 119 Notice */}
+{selectedForm === "notice119" && (
+  <Notice119Form
+    isOpen={true}
+    onClose={() => setSelectedForm(null)}
+  />
+)}
+
+{/* Hearing Notice */}
+{selectedForm === "hearing" && (
+  <HearingNoticeForm
+    isOpen={true}
+    onClose={() => setSelectedForm(null)}
+  />
+)}
+
+{/* Appeal Form */}
+{selectedForm === "appeal" && (
+  <AppealForm
+    isOpen={true}
+    onClose={() => setSelectedForm(null)}
+  />
+)}
+
+{/* Namuna 43 */}
+{selectedForm === "namuna43" && (
+  <Namuna43Form
+    isOpen={true}
+    onClose={() => setSelectedForm(null)}
+  />
+)}
+
     </div>
   );
 }
