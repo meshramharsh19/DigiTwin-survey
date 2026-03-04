@@ -3,6 +3,9 @@ import { X, Save } from "lucide-react";
 import axios from "axios";
 import "../Style/HouseDetailsModal.css";
 
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+
 const initialState = {
   ownerName: "",
   ward: "",
@@ -14,10 +17,12 @@ const initialState = {
 
 export default function AppealForm({ isOpen, onClose }) {
   const [formData, setFormData] = useState(initialState);
+  
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-
+  const navigate = useNavigate();
+  
   const handleSave = async () => {
     try {
       await axios.post("http://localhost:5001/api/appeal", formData);
@@ -39,11 +44,20 @@ export default function AppealForm({ isOpen, onClose }) {
     <div className="modal-overlay">
       <div className="modal-content professional-form">
         <div className="modal-header">
-          <h3>Appeal Form</h3>
-          <button onClick={onClose} className="modal-close-button">
-            <X size={20}/>
-          </button>
-        </div>
+
+  <button
+  onClick={() => navigate(0)}
+  className="modal-close-button"
+>
+  <ArrowLeft size={20}/>
+</button>
+  <h3>Appeal Form</h3>
+
+  <button onClick={onClose} className="modal-close-button">
+    <X size={20}/>
+  </button>
+
+</div>
 
         <div className="modal-body">
           <fieldset>

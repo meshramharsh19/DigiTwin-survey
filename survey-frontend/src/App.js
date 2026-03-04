@@ -6,6 +6,7 @@ import Map from './Components/MapAndForms/JavaScript/map';
 import { AuthProvider, useAuth } from './Components/Authentication/JavaScript/AuthContext';
 import ProtectedRoute from './Components/Authentication/JavaScript/ProtectedRoute';
 
+
 function AppRoutes() {
   const { authLoading } = useAuth();
 
@@ -29,6 +30,7 @@ function AppRoutes() {
         }
       />
     </Routes>
+    
   );
 }
 

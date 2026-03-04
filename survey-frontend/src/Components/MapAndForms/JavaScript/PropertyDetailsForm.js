@@ -3,6 +3,9 @@ import { X, Save } from "lucide-react";
 import axios from "axios";
 import "../Style/PropertyDetailsForm.css";
 
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+
 const initialState = {
   ownerName: "",
   occupierName: "",
@@ -32,6 +35,8 @@ const initialState = {
 export default function PropertyDetailsForm({ isOpen, onClose }) {
 
   const [formData, setFormData] = useState(initialState);
+
+  const navigate = useNavigate();
 
   // -------------------------
   // AUTO TAX CALCULATION
@@ -122,7 +127,13 @@ export default function PropertyDetailsForm({ isOpen, onClose }) {
 <div className="modal-overlay">
 <div className="modal-content professional-form">
 
-<div className="modal-header">
+        <div className="modal-header">
+       <button
+  onClick={() => navigate(0)}
+  className="modal-close-button"
+>
+  <ArrowLeft size={20}/>
+</button>
 <h3>Main Property Assessment Entry</h3>
 <button onClick={onClose} className="modal-close-button">
 <X size={20}/>

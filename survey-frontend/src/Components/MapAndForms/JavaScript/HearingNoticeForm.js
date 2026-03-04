@@ -3,6 +3,9 @@ import { X, Save } from "lucide-react";
 import axios from "axios";
 import "../Style/HouseDetailsModal.css";
 
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+
 const initialState = {
   ownerName: "",
   address: "",
@@ -16,6 +19,8 @@ const initialState = {
 export default function HearingNoticeForm({ isOpen, onClose }) {
 
   const [formData, setFormData] = useState(initialState);
+
+    const navigate = useNavigate();
 
   const handleChange = (e) =>
     setFormData({
@@ -58,12 +63,20 @@ export default function HearingNoticeForm({ isOpen, onClose }) {
       <div className="modal-content professional-form">
 
         <div className="modal-header">
-          <h3>Hearing Notice</h3>
+  <button
+  onClick={() => navigate(0)}
+  className="modal-close-button"
+>
+  <ArrowLeft size={20}/>
+</button>
 
-          <button onClick={onClose} className="modal-close-button">
-            <X size={20}/>
-          </button>
-        </div>
+      <h3>Hearing Notice</h3>
+
+  <button onClick={onClose} className="modal-close-button">
+    <X size={20}/>
+  </button>
+
+</div>
 
         <div className="modal-body">
 
