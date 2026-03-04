@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, Save } from "lucide-react";
+import axios from "axios";
 import "../Style/HouseDetailsModal.css";
 
 const initialState = {
@@ -11,15 +12,39 @@ const initialState = {
   noticeDate: "",
 };
 
-export default function Namuna43Form({ isOpen, onClose, onSave }) {
+export default function Namuna43Form({ isOpen, onClose }) {
+
   const [formData, setFormData] = useState(initialState);
 
   const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
 
-  const handleSave = () => {
-    onSave(formData);
-    onClose();
+  const handleSave = async () => {
+
+    try {
+
+      await axios.post(
+        "http://localhost:5001/api/namuna43",
+        formData
+      );
+
+      alert("Namuna 43 notice saved successfully");
+
+      setFormData(initialState);
+
+      onClose();
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert("Failed to save notice");
+
+    }
+
   };
 
   if (!isOpen) return null;
@@ -27,6 +52,7 @@ export default function Namuna43Form({ isOpen, onClose, onSave }) {
   return (
     <div className="modal-overlay">
       <div className="modal-content professional-form">
+
         <div className="modal-header">
           <h3>Namuna 43 Notice</h3>
           <button onClick={onClose} className="modal-close-button">
@@ -35,50 +61,86 @@ export default function Namuna43Form({ isOpen, onClose, onSave }) {
         </div>
 
         <div className="modal-body">
+
           <fieldset>
             <legend>Notice Information</legend>
+
             <div className="form-grid-2">
 
               <div className="form-group">
                 <label>Owner Name</label>
-                <input name="ownerName" onChange={handleChange}/>
+                <input
+                  name="ownerName"
+                  value={formData.ownerName}
+                  onChange={handleChange}
+                />
               </div>
 
               <div className="form-group">
                 <label>Ward</label>
-                <input name="ward" onChange={handleChange}/>
+                <input
+                  name="ward"
+                  value={formData.ward}
+                  onChange={handleChange}
+                />
               </div>
 
               <div className="form-group">
                 <label>Zone</label>
-                <input name="zone" onChange={handleChange}/>
+                <input
+                  name="zone"
+                  value={formData.zone}
+                  onChange={handleChange}
+                />
               </div>
 
               <div className="form-group">
                 <label>Property No</label>
-                <input name="propertyNo" onChange={handleChange}/>
+                <input
+                  name="propertyNo"
+                  value={formData.propertyNo}
+                  onChange={handleChange}
+                />
               </div>
 
               <div className="form-group full-width">
                 <label>Notice Reason</label>
-                <textarea name="noticeReason" rows="3" onChange={handleChange}/>
+                <textarea
+                  name="noticeReason"
+                  rows="3"
+                  value={formData.noticeReason}
+                  onChange={handleChange}
+                />
               </div>
 
               <div className="form-group">
                 <label>Notice Date</label>
-                <input name="noticeDate" type="date" onChange={handleChange}/>
+                <input
+                  type="date"
+                  name="noticeDate"
+                  value={formData.noticeDate}
+                  onChange={handleChange}
+                />
               </div>
 
             </div>
+
           </fieldset>
+
         </div>
 
         <div className="modal-footer">
-          <button onClick={onClose} className="button-secondary">Cancel</button>
+
+          <button onClick={onClose} className="button-secondary">
+            Cancel
+          </button>
+
           <button onClick={handleSave} className="button-primary">
             <Save size={16}/> Save
           </button>
+
         </div>
+
       </div>
     </div>
   );

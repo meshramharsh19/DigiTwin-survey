@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, Save } from "lucide-react";
+import axios from "axios";
 import "../Style/HouseDetailsModal.css";
 
 const initialState = {
@@ -11,15 +12,25 @@ const initialState = {
   appealReason: "",
 };
 
-export default function AppealForm({ isOpen, onClose, onSave }) {
+export default function AppealForm({ isOpen, onClose }) {
   const [formData, setFormData] = useState(initialState);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleSave = () => {
-    onSave(formData);
-    onClose();
+  const handleSave = async () => {
+    try {
+      await axios.post("http://localhost:5001/api/appeal", formData);
+
+      alert("Appeal saved successfully");
+
+      setFormData(initialState);
+      onClose();
+
+    } catch (error) {
+      console.error("Error saving appeal:", error);
+      alert("Failed to save appeal");
+    }
   };
 
   if (!isOpen) return null;
@@ -41,32 +52,59 @@ export default function AppealForm({ isOpen, onClose, onSave }) {
 
               <div className="form-group">
                 <label>Owner Name</label>
-                <input name="ownerName" onChange={handleChange}/>
+                <input
+                  name="ownerName"
+                  value={formData.ownerName}
+                  onChange={handleChange}
+                />
               </div>
 
               <div className="form-group">
                 <label>Ward</label>
-                <input name="ward" onChange={handleChange}/>
+                <input
+                  name="ward"
+                  value={formData.ward}
+                  onChange={handleChange}
+                />
               </div>
 
               <div className="form-group">
                 <label>Property No</label>
-                <input name="propertyNo" onChange={handleChange}/>
+                <input
+                  name="propertyNo"
+                  value={formData.propertyNo}
+                  onChange={handleChange}
+                />
               </div>
 
               <div className="form-group">
                 <label>Previous Tax</label>
-                <input name="previousTax" type="number" onChange={handleChange}/>
+                <input
+                  name="previousTax"
+                  type="number"
+                  value={formData.previousTax}
+                  onChange={handleChange}
+                />
               </div>
 
               <div className="form-group">
                 <label>Revised Tax</label>
-                <input name="revisedTax" type="number" onChange={handleChange}/>
+                <input
+                  name="revisedTax"
+                  type="number"
+                  value={formData.revisedTax}
+                  onChange={handleChange}
+                />
               </div>
 
               <div className="form-group full-width">
                 <label>Appeal Reason</label>
-                <textarea name="appealReason" rows="3" onChange={handleChange}/>
+                <textarea
+                  name="appealReason"
+                  rows="3"
+                  value={formData.appealReason}
+                  onChange={handleChange}
+                />
               </div>
 
             </div>
@@ -74,7 +112,10 @@ export default function AppealForm({ isOpen, onClose, onSave }) {
         </div>
 
         <div className="modal-footer">
-          <button onClick={onClose} className="button-secondary">Cancel</button>
+          <button onClick={onClose} className="button-secondary">
+            Cancel
+          </button>
+
           <button onClick={handleSave} className="button-primary">
             <Save size={16}/> Save
           </button>

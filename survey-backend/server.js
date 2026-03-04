@@ -5,6 +5,12 @@ const cors = require('cors');
 const RoadSurvey = require('./model/RoadSurvey'); // import RoadSurvey model
 const authMiddleware = require('./middleware/authMiddleware');
 const authRoutes = require('./routes/authRoutes');
+const Appeal = require("./model/Appeal");
+const appealRoutes = require("./routes/appealRoutes");
+const propertyRoutes = require("./routes/propertyRoutes");
+const noticeRoutes = require("./routes/noticeRoutes");
+const hearingRoutes = require("./routes/hearingRoutes");
+const namuna43Routes = require("./routes/namuna43Routes");
 
 
 const app = express();
@@ -19,7 +25,11 @@ app.use(express.json({ limit: '10mb' })); // increase if KML / payloads are big
 app.use(express.urlencoded({ extended: true }));
 app.use("/videos", express.static("videos"));
 app.use('/api/auth', authRoutes);
-
+app.use('/api', appealRoutes);  
+app.use("/api", propertyRoutes);
+app.use("/api", noticeRoutes);
+app.use("/api", hearingRoutes);
+app.use("/api", namuna43Routes);
 
 
 // --- MongoDB Connection ---
