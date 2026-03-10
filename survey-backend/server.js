@@ -139,7 +139,7 @@ function uploadKmlToGridFS(fileName, kmlString) {
 // USAGE → STYLE mapping (adjust colors here)
 // store colors as "#RRGGBB"
 const USAGE_STYLES = {
-  default:                { color: '#2975cc' }  // Professional Blue (fallback)
+  default:                { color: '#2f7ad0' }  // Professional Blue (fallback)
 };
 
 function getStyleForUsage(usage) {
