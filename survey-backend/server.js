@@ -139,7 +139,7 @@ function uploadKmlToGridFS(fileName, kmlString) {
 // USAGE → STYLE mapping (adjust colors here)
 // store colors as "#RRGGBB"
 const USAGE_STYLES = {
-  default:                { color: '#2f7ad0' }  // Professional Blue (fallback)
+  default:                { color: '#2975cc' }  // Professional Blue (fallback)
 };
 
 function getStyleForUsage(usage) {
@@ -768,7 +768,7 @@ const namuna = await mongoose.connection
   properties.forEach(d => {
     features.push({
       type: "Feature",
-      geometry: null,
+      geometry: d.location,
       properties: {
         type: "property",
         _id: d._id,
@@ -794,27 +794,27 @@ const namuna = await mongoose.connection
   });
 
   appeals.forEach(d => {
-    features.push({
-      type: "Feature",
-      geometry: null,
-      properties: {
-        type: "appeal",
-        _id: d._id,
-        ownerName: d.ownerName,
-        propertyNo: d.propertyNo
-      }
-    });
+  features.push({
+    type: "Feature",
+    geometry: d.location,
+    properties: {
+      type: "appeal",
+      _id: d._id,
+      ownerName: d.ownerName,
+      propertyNo: d.propertyNo
+    }
   });
+});
 
   hearings.forEach(d => {
     features.push({
       type: "Feature",
-      geometry: null,
+      geometry: d.location,
       properties: {
         type: "hearing",
         _id: d._id,
-        ownerName: d.ownerName,
-        hearingDate: d.hearingDate
+         ownerName: d.ownerName,
+      propertyNo: d.propertyNo
       }
     });
   });
@@ -822,12 +822,13 @@ const namuna = await mongoose.connection
   notices.forEach(d => {
     features.push({
       type: "Feature",
-      geometry: null,
+      geometry: d.location,
       properties: {
         type: "notice119",
         _id: d._id,
         ownerName: d.ownerName,
         newPropertyNo: d.newPropertyNo
+        
       }
     });
   });
@@ -835,12 +836,12 @@ const namuna = await mongoose.connection
   namuna.forEach(d => {
     features.push({
       type: "Feature",
-      geometry: null,
+      geometry: d.location,
       properties: {
         type: "namuna43",
         _id: d._id,
         ownerName: d.ownerName,
-        propertyNo: d.propertyNo
+        propertyNo: d.propertyNo,
       }
     });
   });
