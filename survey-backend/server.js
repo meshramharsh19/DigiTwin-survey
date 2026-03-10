@@ -139,18 +139,7 @@ function uploadKmlToGridFS(fileName, kmlString) {
 // USAGE → STYLE mapping (adjust colors here)
 // store colors as "#RRGGBB"
 const USAGE_STYLES = {
-  residential:            { color: '#4895EF' }, // Soft Professional Blue
-  commercial:             { color: '#4361EE' }, // Indigo (strong + premium)
-  industrial:             { color: '#3A0CA3' }, // Deep Violet (distinct)
-  institutional:          { color: '#4CC9F0' }, // Sky Blue Accent
-  government:             { color: '#7209B7' }, // Royal Purple
-  hospital:               { color: '#F72585' }, // Magenta Highlight (stands out)
-  'community hall':       { color: '#8C5E99' }, // Muted Purple-Grey (professional)
-  'entertainment hall':   { color: '#B892FF' }, // Light Lavender (soft + visible)
-  'without cc':           { color: '#A0A4B8' }, // Cool Grey
-  'change of properties': { color: '#89C2D9' }, // Muted Cyan (easy to notice)
-  'unauthorized towers':  { color: '#6C757D' }, // Dark Professional Grey
-  default:                { color: '#4895EF' }  // Professional Blue (fallback)
+  default:                { color: '#2975cc' }  // Professional Blue (fallback)
 };
 
 function getStyleForUsage(usage) {
@@ -747,6 +736,120 @@ app.get('/api/3d/surveys', async (req, res) => {
   }
 });
 
+app.get("/api/3d/all-data", async (req, res) => {
+
+  const surveys = await SurveyEntry.find().lean();
+  const roads = await RoadSurvey.find().lean();
+  const appeals = await Appeal.find().lean();
+  
+const hearings = await mongoose.connection
+  .collection("hearingNotices")
+  .find()
+  .toArray();
+
+const notices = await mongoose.connection
+  .collection("notice119")
+  .find()
+  .toArray();
+
+const namuna = await mongoose.connection
+  .collection("namuna43Notices")
+  .find()
+    .toArray();
+  
+   // GET PROPERTY DETAILS
+  const properties = await mongoose.connection
+    .collection("propertyDetails")
+    .find()
+    .toArray();
+
+  const features = [];
+
+  properties.forEach(d => {
+    features.push({
+      type: "Feature",
+      geometry: null,
+      properties: {
+        type: "property",
+        _id: d._id,
+        ownerName: d.ownerName,
+        propertyNumber: d.propertyNumber,
+        propertyAddress: d.propertyAddress
+      }
+    });
+  });
+
+  surveys.forEach(d => {
+    features.push({
+      type: "Feature",
+      geometry: d.location,
+      properties: {
+        type: "survey",
+        _id: d._id,
+        ownerName: d.ownerName,
+        propertyNumber: d.propertyNumber,
+        propertyAddress: d.propertyAddress
+      }
+    });
+  });
+
+  appeals.forEach(d => {
+    features.push({
+      type: "Feature",
+      geometry: null,
+      properties: {
+        type: "appeal",
+        _id: d._id,
+        ownerName: d.ownerName,
+        propertyNo: d.propertyNo
+      }
+    });
+  });
+
+  hearings.forEach(d => {
+    features.push({
+      type: "Feature",
+      geometry: null,
+      properties: {
+        type: "hearing",
+        _id: d._id,
+        ownerName: d.ownerName,
+        hearingDate: d.hearingDate
+      }
+    });
+  });
+
+  notices.forEach(d => {
+    features.push({
+      type: "Feature",
+      geometry: null,
+      properties: {
+        type: "notice119",
+        _id: d._id,
+        ownerName: d.ownerName,
+        newPropertyNo: d.newPropertyNo
+      }
+    });
+  });
+
+  namuna.forEach(d => {
+    features.push({
+      type: "Feature",
+      geometry: null,
+      properties: {
+        type: "namuna43",
+        _id: d._id,
+        ownerName: d.ownerName,
+        propertyNo: d.propertyNo
+      }
+    });
+  });
+
+  res.json({
+    type: "FeatureCollection",
+    features
+  });
+});
 
 
 app.get('/api/3d/surveys/:id', async (req, res) => {
