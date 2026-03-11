@@ -1,23 +1,92 @@
 const express = require("express");
 const router = express.Router();
-
 const Appeal = require("../model/Appeal");
 
-// POST: Save appeal
+const { uploadKmlToGridFS } = require("../utils/kmlHelper");
+
 router.post("/appeal", async (req, res) => {
   try {
-    const appeal = new Appeal(req.body);
 
-    const savedAppeal = await appeal.save();
+    const {
+      ownerName,
+      ward,
+      propertyNo,
+      previousTax,
+      revisedTax,
+      appealReason,
+      latitude,
+      longitude
+    } = req.body;
 
-    res.status(201).json({
-      message: "Appeal saved successfully",
-      data: savedAppeal
-    });
+    const appealData = {
+      ownerName,
+      ward,
+      propertyNo,
+      previousTax: previousTax ? Number(previousTax) : null,
+      revisedTax: revisedTax ? Number(revisedTax) : null,
+      appealReason
+    };
+
+    if (latitude && longitude) {
+
+      const lat = Number(latitude);
+      const lng = Number(longitude);
+
+      // Save coordinates
+      appealData.latitude = lat;
+      appealData.longitude = lng;
+
+      // GeoJSON location
+      appealData.location = {
+        type: "Point",
+        coordinates: [lng, lat]
+      };
+
+      // centroid
+      appealData.centroid = [lng, lat];
+
+      // style for map
+      appealData.style = {
+        color: "#2975cc",
+        opacity: 0.5,
+        markerType: "square"
+      };
+
+      // KML generation
+      const kmlString = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <Placemark>
+      <name>${ownerName}</name>
+      <Point>
+        <coordinates>${lng},${lat},0</coordinates>
+      </Point>
+    </Placemark>
+  </Document>
+</kml>`;
+
+      const fileName = `appeal-${Date.now()}.kml`;
+
+      const fileId = await uploadKmlToGridFS(fileName, kmlString);
+
+      appealData.kmlFileId = fileId;
+
+      appealData.kmlUrl =
+        `${req.protocol}://${req.headers.host}/api/kml/public/${fileId}`;
+    }
+
+    const appeal = new Appeal(appealData);
+
+    const saved = await appeal.save();
+
+    res.status(201).json(saved);
 
   } catch (error) {
-    console.error("Error saving appeal:", error);
-    res.status(500).json({ message: "Server error" });
+
+    console.error("Appeal save error:", error);
+
+    res.status(500).json({ error: error.message });
+
   }
 });
 

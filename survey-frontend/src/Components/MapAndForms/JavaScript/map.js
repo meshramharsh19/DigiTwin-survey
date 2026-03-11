@@ -740,10 +740,11 @@ export default function MapComponent() {
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isModalOpen, setModalOpen] = useState(false);
+  // const [isModalOpen, setModalOpen] = useState(false);
   const [formSelectorOpen, setFormSelectorOpen] = useState(false);
 const [selectedForm, setSelectedForm] = useState(null);
   const [capturedLocation, setCapturedLocation] = useState(null);
+  const [polygonLocation, setPolygonLocation] = useState(null);
 
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -809,6 +810,21 @@ const [selectedForm, setSelectedForm] = useState(null);
 
     return fc;
   }
+
+  function getPolygonCentroid(coords) {
+  let sumLng = 0;
+  let sumLat = 0;
+
+  coords.forEach(([lng, lat]) => {
+    sumLng += lng;
+    sumLat += lat;
+  });
+
+  return {
+    lat: sumLat / coords.length,
+    lng: sumLng / coords.length
+  };
+}
 
   // Apply color to drawn polygons and set usage property on each layer
   const applyPolygonColor = (usage) => {
@@ -960,29 +976,28 @@ L.tileLayer(
 
       // 3. Jab koi shape create ho, toh use 'drawnItems' group mein add karein
       map.on(L.Draw.Event.CREATED, function (event) {
-        const layer = event.layer;
 
-        // attach GPS survey point to this polygon
-        layer.feature = layer.feature || { type: 'Feature', properties: {} };
-        // Use current location if available, otherwise fallback to STATIC_LOCATION
-        if (location) {
-          layer.feature.properties.surveyPoint = [
-            location.lng,
-            location.lat,
-          ];
-        } else {
-          layer.feature.properties.surveyPoint = [
-            STATIC_LOCATION.lng,
-            STATIC_LOCATION.lat,
-          ];
-        }
+  const layer = event.layer;
 
-        // keep your old usage default
-        setLayerUsageProperty(layer, 'default');
+  // Add polygon to map
+  drawnItems.addLayer(layer);
 
-        // add to group
-        drawnItems.addLayer(layer);
-      });
+  // Get polygon coordinates
+  const geo = layer.toGeoJSON();
+  const coords = geo.geometry.coordinates[0];
+
+  // Calculate centroid
+  const centroid = getPolygonCentroid(coords);
+
+  // Save centroid for forms
+  setPolygonLocation({
+    latitude: centroid.lat,
+    longitude: centroid.lng
+  });
+
+  console.log("Polygon centroid:", centroid);
+
+});
 
       // --- NAYA CODE (LEAFLET-DRAW) KHATAM ---
     }
@@ -1413,26 +1428,29 @@ L.tileLayer(
 {/* Property Details Form */}
 {selectedForm === "property" && (
   <PropertyDetailsForm
-    isOpen={true}
-    onClose={() => setSelectedForm(null)}
-    capturedLocation={capturedLocation}
-  />
+  isOpen={true}
+  onClose={() => setSelectedForm(null)}
+  capturedLocation={capturedLocation}
+  polygonLocation={polygonLocation}
+/>
 )}
 
 {/* 119 Notice */}
 {selectedForm === "notice119" && (
-  <Notice119Form
-    isOpen={true}
-    onClose={() => setSelectedForm(null)}
-  />
+ <Notice119Form
+  isOpen={true}
+  onClose={() => setSelectedForm(null)}
+  polygonLocation={polygonLocation}
+/>
 )}
 
 {/* Hearing Notice */}
 {selectedForm === "hearing" && (
   <HearingNoticeForm
-    isOpen={true}
-    onClose={() => setSelectedForm(null)}
-  />
+  isOpen={true}
+  onClose={() => setSelectedForm(null)}
+  polygonLocation={polygonLocation}
+/>
 )}
 
 {/* Appeal Form */}
@@ -1440,15 +1458,17 @@ L.tileLayer(
   <AppealForm
     isOpen={true}
     onClose={() => setSelectedForm(null)}
+    polygonLocation={polygonLocation}
   />
 )}
 
 {/* Namuna 43 */}
 {selectedForm === "namuna43" && (
-  <Namuna43Form
-    isOpen={true}
-    onClose={() => setSelectedForm(null)}
-  />
+<Namuna43Form
+  isOpen={true}
+  onClose={() => setSelectedForm(null)}
+  polygonLocation={polygonLocation}
+/>
 )}
 
     </div>

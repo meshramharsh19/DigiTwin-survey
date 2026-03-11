@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Save } from "lucide-react";
 import axios from "axios";
 import "../Style/HouseDetailsModal.css";
@@ -13,15 +13,28 @@ const initialState = {
   previousTax: "",
   revisedTax: "",
   appealReason: "",
+  latitude: "",
+  longitude: ""
 };
 
-export default function AppealForm({ isOpen, onClose }) {
+export default function AppealForm({ isOpen, onClose, polygonLocation }){
   const [formData, setFormData] = useState(initialState);
+
+  useEffect(() => {
+  if (polygonLocation) {
+    setFormData((prev) => ({
+      ...prev,
+      latitude: polygonLocation.latitude,
+      longitude: polygonLocation.longitude
+    }));
+  }
+}, [polygonLocation]);
   
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
   const navigate = useNavigate();
+
   
   const handleSave = async () => {
     try {
@@ -63,6 +76,8 @@ export default function AppealForm({ isOpen, onClose }) {
           <fieldset>
             <legend>Appeal Details</legend>
             <div className="form-grid-2">
+              
+              
 
               <div className="form-group">
                 <label>Owner Name</label>
