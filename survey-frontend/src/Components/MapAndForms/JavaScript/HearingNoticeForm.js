@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Save } from "lucide-react";
 import axios from "axios";
 import "../Style/HouseDetailsModal.css";
@@ -14,11 +14,23 @@ const initialState = {
   hearingDate: "",
   hearingTime: "",
   hearingLocation: "",
+  latitude: "",
+  longitude: ""
 };
 
-export default function HearingNoticeForm({ isOpen, onClose }) {
+export default function HearingNoticeForm({ isOpen, onClose, polygonLocation }) {
 
   const [formData, setFormData] = useState(initialState);
+
+  useEffect(() => {
+  if (polygonLocation) {
+    setFormData(prev => ({
+      ...prev,
+      latitude: polygonLocation.latitude,
+      longitude: polygonLocation.longitude
+    }));
+  }
+}, [polygonLocation]);
 
     const navigate = useNavigate();
 

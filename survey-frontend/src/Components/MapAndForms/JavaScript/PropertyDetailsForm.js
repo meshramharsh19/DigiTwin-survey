@@ -30,11 +30,24 @@ const initialState = {
   treeTax: 0,
   fireTax: 0,
   totalTax: 0,
+
+   latitude: "",
+  longitude: ""
 };
 
-export default function PropertyDetailsForm({ isOpen, onClose }) {
+export default function PropertyDetailsForm({ isOpen, onClose, polygonLocation }) {
 
   const [formData, setFormData] = useState(initialState);
+
+  useEffect(() => {
+  if (polygonLocation) {
+    setFormData(prev => ({
+      ...prev,
+      latitude: polygonLocation.latitude,
+      longitude: polygonLocation.longitude
+    }));
+  }
+}, [polygonLocation]);
 
   const navigate = useNavigate();
 

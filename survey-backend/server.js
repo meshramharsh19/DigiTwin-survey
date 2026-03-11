@@ -107,7 +107,9 @@ const surveySchema = new mongoose.Schema({
     opacity: { type: Number, default: 0.5 },
     markerType: { type: String, default: 'square' }
   }
-}, { timestamps: true });
+}, { timestamps: true },);
+
+
 
 surveySchema.index({ location: '2dsphere' });
 
@@ -774,7 +776,7 @@ const namuna = await mongoose.connection
         _id: d._id,
         ownerName: d.ownerName,
         propertyNumber: d.propertyNumber,
-        propertyAddress: d.propertyAddress
+        propertyAddress: d.propertyAddress,
       }
     });
   });
@@ -801,7 +803,7 @@ const namuna = await mongoose.connection
       type: "appeal",
       _id: d._id,
       ownerName: d.ownerName,
-      propertyNo: d.propertyNo
+      propertyNo: d.propertyNo,
     }
   });
 });
@@ -814,7 +816,7 @@ const namuna = await mongoose.connection
         type: "hearing",
         _id: d._id,
          ownerName: d.ownerName,
-      propertyNo: d.propertyNo
+        propertyNo: d.propertyNo,
       }
     });
   });
@@ -827,7 +829,7 @@ const namuna = await mongoose.connection
         type: "notice119",
         _id: d._id,
         ownerName: d.ownerName,
-        newPropertyNo: d.newPropertyNo
+        newPropertyNo: d.newPropertyNo,
         
       }
     });
@@ -836,7 +838,7 @@ const namuna = await mongoose.connection
   namuna.forEach(d => {
     features.push({
       type: "Feature",
-      geometry: d.location,
+      geometry: d.location || d.geometry,
       properties: {
         type: "namuna43",
         _id: d._id,

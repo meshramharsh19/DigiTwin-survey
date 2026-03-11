@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Save } from "lucide-react";
 import axios from "axios";
 import "../Style/HouseDetailsModal.css";
@@ -13,11 +13,24 @@ const initialState = {
   propertyNo: "",
   noticeReason: "",
   noticeDate: "",
+  latitude: "",
+  longitude: ""
 };
 
-export default function Namuna43Form({ isOpen, onClose }) {
+export default function Namuna43Form({ isOpen, onClose, polygonLocation }) {
 
   const [formData, setFormData] = useState(initialState);
+
+  useEffect(() => {
+  if (polygonLocation) {
+    setFormData(prev => ({
+      ...prev,
+      latitude: polygonLocation.latitude,
+      longitude: polygonLocation.longitude
+    }));
+  }
+  }, [polygonLocation]);
+  
   const navigate = useNavigate();
   
   const handleChange = (e) =>
