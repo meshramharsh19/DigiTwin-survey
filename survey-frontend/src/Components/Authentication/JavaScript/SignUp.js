@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Map, Lock, User, Eye, EyeOff, Mail, Building, Phone, MapPin, Compass, Globe } from 'lucide-react';
+import { Map, Eye, EyeOff, MapPin, Compass, Globe } from 'lucide-react';
 import '../Styles/SignUp.css';
 import { useNavigate } from 'react-router-dom';
 
 
-export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
+export default function GISSurveyorSignup() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
@@ -247,13 +247,13 @@ export default function GISSurveyorSignup({ onSignup, onSwitchToLogin }) {
               />
               <label htmlFor="terms" className="checkbox-label">
                 I agree to the{' '}
-                <a href="#" className="terms-link">
+                <button type="button" className="terms-link">
                   Terms & Conditions
-                </a>{' '}
+                </button>{' '}
                 and{' '}
-                <a href="#" className="terms-link">
+                <button type="button" className="terms-link">
                   Privacy Policy
-                </a>
+                </button>
               </label>
             </div>
 

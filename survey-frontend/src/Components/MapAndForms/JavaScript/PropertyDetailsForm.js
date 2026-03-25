@@ -141,17 +141,14 @@ export default function PropertyDetailsForm({ isOpen, onClose, polygonLocation }
 <div className="modal-content professional-form">
 
         <div className="modal-header">
-       <button
-  onClick={() => navigate(0)}
-  className="modal-close-button"
->
-  <ArrowLeft size={20}/>
-</button>
-<h3>Main Property Assessment Entry</h3>
-<button onClick={onClose} className="modal-close-button">
-<X size={20}/>
-</button>
-</div>
+          <button onClick={() => navigate(0)} className="modal-close-button" aria-label="Back">
+            <ArrowLeft size={18} />
+          </button>
+          <h3 className="modal-title">Main Property Assessment Entry</h3>
+          <button onClick={onClose} className="modal-close-button" aria-label="Close">
+            <X size={18} />
+          </button>
+        </div>
 
 <div className="modal-body">
 

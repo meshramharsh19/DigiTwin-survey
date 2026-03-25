@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import UserLogin from './Components/Authentication/JavaScript/UserLogin';
 import GISSurveyorSignup from './Components/Authentication/JavaScript/SignUp';
@@ -35,6 +36,25 @@ function AppRoutes() {
 }
 
 function App() {
+  useEffect(() => {
+    const applyTheme = (theme) => {
+      document.body.classList.toggle('theme-dark', theme === 'dark');
+      document.body.classList.toggle('theme-light', theme !== 'dark');
+    };
+
+    applyTheme(localStorage.getItem('geosurvey-theme') || 'light');
+
+    const onThemeChange = (event) => {
+      applyTheme(event.detail || 'light');
+    };
+
+    window.addEventListener('geosurvey-theme-change', onThemeChange);
+
+    return () => {
+      window.removeEventListener('geosurvey-theme-change', onThemeChange);
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <Router>

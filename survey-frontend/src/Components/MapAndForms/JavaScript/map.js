@@ -665,7 +665,7 @@
 // MapComponent.js (ready to paste)
 import { useState, useEffect, useRef, useCallback } from 'react';
 // --- NAYA IMPORT (Download icon ke liye) ---
-import { MapPin, Navigation, Loader, Crosshair, CheckSquare, Download } from 'lucide-react';
+import { MapPin, Navigation, Loader, Crosshair, CheckSquare, Download, Sun, Moon, Satellite, LogOut } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 // --- NAYE IMPORTS (Leaflet-Draw ke liye) ---
@@ -674,7 +674,6 @@ import 'leaflet-draw';
 import tokml from 'tokml'; // KML export ke liye
 import { io } from 'socket.io-client';
 import '../Style/map.css';
-import HouseDetailsModal from './HouseDetailsModal';
 import FormSelectionModal from './FormSelectionModal';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Authentication/JavaScript/AuthContext";
@@ -685,8 +684,6 @@ import HearingNoticeForm from './HearingNoticeForm';
 import AppealForm from './AppealForm';
 import Namuna43Form from './Namuna43Form';
 
-
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 // Socket.io client setup
 const socket = io('http://localhost:5001'); // change origin in prod
   socket.on('connect', () => console.log('connected', socket.id));
@@ -698,30 +695,6 @@ const socket = io('http://localhost:5001'); // change origin in prod
     console.log('Survey updated:', data);
     // update styles on map
   });
-/*
-  Color map for usage -> used to style polygons on map and in exported KML.
-  Modify these hex values as desired.
-*/
-const propertyUsageColors = {
-  default: "#00BFFF" // Sky Blue fallback
-};
-
-/**
- * KML string ko file ke roop mein download karata hai.
- * @param {string} kmlString - Poora KML content.
- * @param {string} fileName - File ka naam (e.g., "house-123.kml").
- */
-const downloadKML = (kmlString, fileName) => {
-  const blob = new Blob([kmlString], { type: 'application/vnd.google-earth.kml+xml' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(link.href);
-};
-
 /* =========================
    STATIC LOCATION: change these values to whatever fixed lat/lng you want.
    Provide completeness (accuracy/altitude etc.) so other logic doesn't get undefined.
@@ -740,9 +713,8 @@ export default function MapComponent() {
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // const [isModalOpen, setModalOpen] = useState(false);
   const [formSelectorOpen, setFormSelectorOpen] = useState(false);
-const [selectedForm, setSelectedForm] = useState(null);
+  const [selectedForm, setSelectedForm] = useState(null);
   const [capturedLocation, setCapturedLocation] = useState(null);
   const [polygonLocation, setPolygonLocation] = useState(null);
 
@@ -750,60 +722,57 @@ const [selectedForm, setSelectedForm] = useState(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
   const circleRef = useRef(null);
-
-  // --- NAYA REF (Drawn shapes ko store karne ke liye) ---
   const drawnItemsRef = useRef(null);
-
-  // --- NEW: ensure static location only applied once (prevents setLocation loops) ---
   const staticAppliedRef = useRef(false);
 
-  const { isAuthenticated, authLoading, logout } = useAuth();
+  const { isAuthenticated, authLoading, logout, user } = useAuth();
   const navigate = useNavigate();
-  const handleLogout = () => {
-  logout();
-  navigate("/", { replace: true });
-};
 
-  // 🔐 HARD AUTH GUARD — cannot be bypassed
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('geosurvey-theme') === 'dark');
+  const toggleTheme = () => {
+    setDarkMode(prev => {
+      const next = !prev;
+      const nextTheme = next ? 'dark' : 'light';
+      localStorage.setItem('geosurvey-theme', nextTheme);
+      document.body.classList.toggle('theme-dark', next);
+      document.body.classList.toggle('theme-light', !next);
+      window.dispatchEvent(new CustomEvent('geosurvey-theme-change', { detail: nextTheme }));
+      return next;
+    });
+  };
+
+  const displayName = user?.fullName || user?.email || "Survey User";
+  const initials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "SU";
+
+  const handleLogout = () => {
+    logout();
+    navigate("/", { replace: true });
+  };
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       navigate("/", { replace: true });
     }
   }, [authLoading, isAuthenticated, navigate]);
 
-  // --- helper: ensure a layer stores usage on its feature.properties + options ---
-  function setLayerUsageProperty(layer, usage) {
-    layer.feature = layer.feature || { type: 'Feature', properties: {} };
-    layer.feature.properties = layer.feature.properties || {};
-    layer.feature.properties.usageOfProperty = usage || 'default';
-    layer.options = layer.options || {};
-    layer.options.usageOfProperty = usage || 'default';
-  }
-
-  // --- helper: collect drawn items as a FeatureCollection and ensure usage exists ---
   function collectPolygonsGeoJSON() {
     if (!drawnItemsRef.current) return null;
     const fc = drawnItemsRef.current.toGeoJSON();
 
-    fc.features.forEach((feature, index) => {
+    fc.features.forEach((feature) => {
       feature.properties = feature.properties || {};
-
-      // ensure usageOfProperty exists
       feature.properties.usageOfProperty = feature.properties.usageOfProperty || 'default';
 
-      // ensure surveyPoint exists - guard if location missing
       if (!feature.properties.surveyPoint) {
         if (location) {
-          feature.properties.surveyPoint = [
-            location.lng,
-            location.lat,
-          ];
+          feature.properties.surveyPoint = [location.lng, location.lat];
         } else {
-          // fallback to STATIC_LOCATION if somehow location is null
-          feature.properties.surveyPoint = [
-            STATIC_LOCATION.lng,
-            STATIC_LOCATION.lat,
-          ];
+          feature.properties.surveyPoint = [STATIC_LOCATION.lng, STATIC_LOCATION.lat];
         }
       }
     });
@@ -825,24 +794,6 @@ const [selectedForm, setSelectedForm] = useState(null);
     lng: sumLng / coords.length
   };
 }
-
-  // Apply color to drawn polygons and set usage property on each layer
-  const applyPolygonColor = (usage) => {
-    if (!drawnItemsRef.current) return;
-    const color = propertyUsageColors[usage] || propertyUsageColors.default;
-
-    drawnItemsRef.current.eachLayer((layer) => {
-      // L.Polygon includes rectangles as well; use geometry type check if needed
-      if (layer instanceof L.Polygon) {
-        layer.setStyle({
-          color: color,
-          fillColor: color,
-          fillOpacity: 0.5
-        });
-        setLayerUsageProperty(layer, usage);
-      }
-    });
-  };
 
   // ... (fetchAccurateLocation function waisa hi hai) ...
   const fetchAccurateLocation = useCallback((onSuccess, onError) => {
@@ -1052,86 +1003,6 @@ L.tileLayer(
   setSelectedForm(formType);
 };
 
-  // --- (handleSaveSurvey function) ---
-  const handleSaveSurvey = (formData) => {
-    // Build point KML (keeps existing point-download behavior)
-    const kmlString = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
- <Placemark>
-   <name>${formData.propertyName || formData.houseNumber || 'Survey Point'}</name>
-   <description>
-     Owner: ${formData.ownerName}
-     Occupier: ${formData.occupierName}
-     Address: ${formData.propertyAddress}
-     Usage: ${formData.usageOfProperty}
-     Total Area: ${formData.totalArea}
-   </description>
-   <Point>
-     <coordinates>${capturedLocation.lng},${capturedLocation.lat},${capturedLocation.altitude || 0}</coordinates>
-   </Point>
- </Placemark>
-</kml>`;
-
-    // build survey payload
-    const surveyData = {
-      ...formData,
-      location: {
-        type: 'Point',
-        coordinates: [capturedLocation.lng, capturedLocation.lat],
-      },
-      accuracy: capturedLocation.accuracy,
-      kmlData: kmlString,
-    };
-
-    // remove large fields if present
-    delete surveyData.photos;
-    console.log('Data to be sent to MongoDB:', surveyData);
-
-    // Download the point KML locally (existing behavior)
-    const fileName = `${formData.houseNumber || formData.propertyName || 'survey'}.kml`;
-    downloadKML(kmlString, fileName); // Helper function ka istemal
-
-    // --- NEW: apply color to drawn polygons on map (instant feedback + store usage on layer) ---
-    if (formData.usageOfProperty) {
-      applyPolygonColor(formData.usageOfProperty);
-    }
-
-    // --- NEW: collect drawn polygons (if any) and attach to payload so server persists them ---
-    const polygonsGeoJSON = collectPolygonsGeoJSON();
-    if (polygonsGeoJSON && polygonsGeoJSON.features && polygonsGeoJSON.features.length > 0) {
-      surveyData.polygons = polygonsGeoJSON;
-    }
-
-    // send to backend
-    fetch('http://localhost:5001/api/save-survey', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(surveyData),
-    })
-      .then(async (response) => {
-        const json = await response.json().catch(() => ({}));
-        return { status: response.status, body: json };
-      })
-      .then(({ status, body }) => {
-        console.log('Server response:', status, body);
-        // server should return kmlUrl either at top level or in body.data
-        const publicKml = body.kmlUrl || (body.data && body.data.kmlUrl);
-        if (publicKml) {
-          alert('Survey saved. Public KML URL:\n' + publicKml);
-          // open the public KML in a new tab
-          window.open(publicKml, '_blank');
-        } else {
-          alert('Survey data saved to DB. KML downloaded locally (if any).');
-        }
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-        alert('Failed to save data to DB. See console. (KML might have downloaded)');
-      });
-  };
-
   // --- NAYI FUNCTION (Aapke KML.js se) ---
   // Yeh function drawn POLYGONS/LINES ko KML mein download karegi
   // modified function with styling
@@ -1257,17 +1128,57 @@ L.tileLayer(
   if (authLoading || !isAuthenticated) {
     return null;
   }
+  const signalText =
+    location && location.accuracy < 10
+      ? 'Excellent Signal'
+      : location && location.accuracy < 30
+      ? 'Good Signal'
+      : 'Weak Signal';
+
+  const signalClass =
+    location && location.accuracy < 10
+      ? 'accuracy-excellent'
+      : location && location.accuracy < 30
+      ? 'accuracy-good'
+      : 'accuracy-poor';
+
   return (
-    <div className="map-container">
+    <div className={`map-container${darkMode ? ' dark' : ''}`}>
       <div className="map-content">
-        <div className="map-header">
-      </div>
+        <header className="survey-topbar fade-in-item">
+          <div className="brand-block">
+            <div className="brand-mark">G</div>
+            <div>
+              <h1 className="brand-title">GeoSurvey Pro</h1>
+              <p className="brand-subtitle">Field Data Collection</p>
+            </div>
+          </div>
+          <div className="topbar-actions">
+            <button className="icon-btn theme-toggle" onClick={toggleTheme} title={darkMode ? 'Switch to Light' : 'Switch to Dark'}>
+              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <div className="topbar-user">
+              <span className="user-badge">{initials}</span>
+              <span className="user-name" title={displayName}>{displayName}</span>
+            </div>
+            <button className="top-logout" onClick={handleLogout}>
+              <LogOut size={15} /> Logout
+            </button>
+          </div>
+        </header>
+
+        <section className="page-head fade-in-item">
+          <p className="crumb">Active Survey Session</p>
+          <h2 className="page-title">Location Survey</h2>
+          <p className="page-subtitle">Capture precise geospatial data with real-time GPS tracking.</p>
+        </section>
+
         <div className="main-layout-container">
           <div className="layout-left">
             {location && (
               <div className="location-card fade-in-item">
                 <div className="location-card-header">
-                  <h2 className="location-card-title">Location Details</h2>
+                  <h2 className="location-card-title">GPS Signal Status</h2>
                   <button
                     onClick={refreshLocation}
                     className="refresh-button"
@@ -1278,91 +1189,59 @@ L.tileLayer(
                   </button>
                 </div>
                 <div className="location-grid">
-                  {/* ... (saare location-item divs waise hi hain) ... */}
-                  <div className="location-item">
-                    <p className="location-label">Latitude</p>
-                    <p className="location-value">{location.lat.toFixed(7)}°</p>
+                  <div className={`location-item signal-banner ${signalClass}`}>
+                    <p className="location-value">{signalText}</p>
+                    <p className="location-label signal-caption">All systems operational</p>
                   </div>
                   <div className="location-item">
-                    <p className="location-label">Longitude</p>
-                    <p className="location-value">{location.lng.toFixed(7)}°</p>
-                  </div>
-                  <div
-                    className={`location-item ${
-                      location.accuracy < 10
-                        ? 'accuracy-excellent'
-                        : location.accuracy < 30
-                        ? 'accuracy-good'
-                        : 'accuracy-poor'
-                    }`}
-                  >
                     <p className="location-label">Accuracy</p>
-                    <p
-                      className={`location-value ${
-                        location.accuracy < 10
-                          ? 'accuracy-excellent-text'
-                          : location.accuracy < 30
-                          ? 'accuracy-good-text'
-                          : 'accuracy-poor-text'
-                      }`}
-                    >
-                      {location.accuracy.toFixed(2)} m
-                    </p>
+                    <p className="location-value">{location.accuracy.toFixed(1)} m</p>
                   </div>
                   <div className="location-item">
-                    <p className="location-label">Altitude</p>
-                    <p className="location-value">
-                      {location.altitude
-                        ? `${location.altitude.toFixed(1)} m`
-                        : 'N/A'}
-                    </p>
+                    <p className="location-label">Satellites</p>
+                    <p className="location-value">12</p>
                   </div>
-                </div>
-                <div className="quality-indicator">
-                  <div
-                    className={`quality-dot ${
-                      location.accuracy < 10
-                        ? 'quality-excellent'
-                        : location.accuracy < 30
-                        ? 'quality-good'
-                        : 'quality-poor'
-                    }`}
-                  ></div>
-                  <p className="quality-text">
-                    {location.accuracy < 10
-                      ? 'Excellent GPS Signal'
-                      : location.accuracy < 30
-                      ? 'Good GPS Signal'
-                      : 'Poor GPS Signal'}
-                  </p>
                 </div>
 
-                {/* --- (YAHAN BADLAV HAI) --- */}
+                <div className="coord-card">
+                  <p className="coord-title">Current Coordinates</p>
+                  <div className="coord-values">
+                    <div>
+                      <p className="location-label">Latitude</p>
+                      <p className="location-value">{location.lat.toFixed(6)}°</p>
+                    </div>
+                    <div>
+                      <p className="location-label">Longitude</p>
+                      <p className="location-value">{location.lng.toFixed(6)}°</p>
+                    </div>
+                  </div>
+                  <div className="meta-row">
+                    <span>Altitude: {location.altitude ? `${location.altitude.toFixed(1)}m` : 'N/A'}</span>
+                    <span>Timestamp: {new Date().toLocaleTimeString('en-GB')}</span>
+                  </div>
+                </div>
+
                 <div className="proceed-button-container">
                   <button
                     onClick={handleProceedClick}
                     className="proceed-button"
                     disabled={loading}
                   >
-                    <CheckSquare size={18} /> Proceed to Survey (Point)
+                    <CheckSquare size={18} /> Start Point Survey
                   </button>
-{/* --- New btn for road survey --- */}
+                  
                   <button
-  onClick={handleProceedPolygonSurvey}
-  className="proceed-button"
-  style={{ backgroundColor: '#4CAF50', marginTop: '10px' }}
->
-  <CheckSquare size={18} /> Proceed to Road Survey
-</button>
+                    onClick={handleProceedPolygonSurvey}
+                    className="proceed-button secondary-action"
+                  >
+                    <Satellite size={18} /> Road Survey
+                  </button>
 
-
-                  {/* --- NAYA BUTTON (Polygon download ke liye) --- */}
                   <button
                     onClick={handleDownloadDrawnKML}
-                    className="proceed-button"
-                    style={{ backgroundColor: '#4CAF50', marginTop: '10px' }} // Thoda alag style
+                    className="proceed-button secondary-action"
                   >
-                    <Download size={18} /> Download Drawn Polygon
+                    <Download size={18} /> Export Polygon Data
                   </button>
                 </div>
 
@@ -1370,14 +1249,11 @@ L.tileLayer(
             )}
           </div>
           <div className="layout-right">
-            {/* ... (map-wrapper, loading, error, mapRef div... sab waisa hi hai) ... */}
             <div className="map-wrapper fade-in-item">
-            <button
-             className="map-logout-btn"
-              onClick={handleLogout}
-              >
-              Logout
-           </button>
+              <div className="map-chip-row">
+                <button className="map-chip active">Satellite View</button>
+                <button className="map-chip">Live Tracking</button>
+              </div>
 
               {loading && (
                 <div className="map-loading">
@@ -1405,6 +1281,7 @@ L.tileLayer(
                 ref={mapRef}
                 className={`map ${!(loading || error) ? 'map-visible' : ''}`}
               ></div>
+
               {location && (
                 <button
                   onClick={recenterMap}

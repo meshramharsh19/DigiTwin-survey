@@ -3,38 +3,36 @@ import { createContext, useContext, useEffect, useState } from "react";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // 🔹 1. token state
   const [token, setToken] = useState(null);
-
-  // 🔹 2. loading state (CRITICAL)
+  const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // 🔹 3. on app load, read token
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("authUser");
 
-    if (storedToken) {
-      setToken(storedToken);
-    } else {
-      setToken(null);
-    }
-
-    setAuthLoading(false); // auth resolved
+    setToken(storedToken || null);
+    setUser(storedUser ? JSON.parse(storedUser) : null);
+    setAuthLoading(false);
   }, []);
 
-  // 🔹 4. auth boolean
   const isAuthenticated = Boolean(token);
 
-  // 🔹 5. login
-  const login = (newToken) => {
+  const login = (newToken, newUser = null) => {
     localStorage.setItem("token", newToken);
     setToken(newToken);
+
+    if (newUser) {
+      localStorage.setItem("authUser", JSON.stringify(newUser));
+      setUser(newUser);
+    }
   };
 
-  // 🔹 6. logout
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("authUser");
     setToken(null);
+    setUser(null);
   };
 
   return (
@@ -42,6 +40,7 @@ export const AuthProvider = ({ children }) => {
       value={{
         isAuthenticated,
         token,
+        user,
         login,
         logout,
         authLoading,

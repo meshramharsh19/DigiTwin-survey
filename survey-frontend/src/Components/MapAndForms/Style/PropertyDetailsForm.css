@@ -1,49 +1,105 @@
+﻿/* PropertyDetailsForm  professional overrides */
+
 .professional-form {
-    background: #ffffff;
-    border-radius: 8px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group label {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: #374151;
+  background: #ffffff;
 }
 
 .full-width {
-    grid-column: span 2;
+  grid-column: 1 / -1;
 }
 
+/* --- Tax Calculation Section --- */
 .tax-section {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border: 1.5px solid #dde6f0;
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  margin-top: 0;
+}
+
+.tax-section legend {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #2d63ed;
+  padding: 0 10px;
+  background: #f8fafc;
+  line-height: 1;
 }
 
 .tax-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .tax-grid div {
-    background: white;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
+  background: #ffffff;
+  padding: 11px 14px;
+  border-radius: 9px;
+  border: 1px solid #e4eaf3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.tax-grid div span:last-child {
+  font-weight: 700;
+  color: #1a2a42;
 }
 
 .total-tax {
-    grid-column: span 2;
-    background: #1e40af !important;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #1e40af 0%, #1d3ba0 100%) !important;
+  color: white !important;
+  font-size: 15px;
+  font-weight: 700;
+  border: none !important;
+  box-shadow: 0 3px 12px rgba(30, 64, 175, 0.25);
+  border-radius: 10px !important;
+}
+
+.total-tax span:last-child {
+  font-weight: 800;
+  color: white !important;
+  font-size: 16px;
+}
+
+/* --- Dark mode --- */
+body.theme-dark .professional-form {
+  background: #111827;
+}
+
+body.theme-dark .tax-section {
+  background: #141e30;
+  border-color: #1f2d42;
+}
+
+body.theme-dark .tax-section legend {
+  color: #72a9ff;
+  background: #141e30;
+}
+
+body.theme-dark .tax-grid div {
+  background: #1a2640;
+  border-color: #2b3d5a;
+  color: #c8daf0;
+}
+
+body.theme-dark .tax-grid div span:last-child {
+  color: #e1ebf8;
+}
+
+body.theme-dark .total-tax {
+  background: linear-gradient(135deg, #2d6cdf 0%, #2058b8 100%) !important;
+  box-shadow: 0 3px 12px rgba(45, 108, 223, 0.3);
+}
+
+body.theme-dark .total-tax span:last-child {
+  color: white !important;
 }

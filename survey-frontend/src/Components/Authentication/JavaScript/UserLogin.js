@@ -45,13 +45,12 @@ export default function GISSurveyorLogin() {
     }
 
     // ✅ user verified by backend
-    login(data.token);
+    login(data.token, data.user || { email });
 
     setSuccess("Login successful!");
 
     setTimeout(() => {
-      navigate("/map");
-    }, 1000);
+navigate("/map", { replace: true });    }, 1000);
 
   } catch (err) {
     setError("Server error. Please try again.");
@@ -146,9 +145,9 @@ export default function GISSurveyorLogin() {
                   Remember me
                 </label>
               </div>
-              <a href="#" className="forgot-password">
+              <button type="button" className="forgot-password" onClick={() => {}}>
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             {/* Error Message */}
