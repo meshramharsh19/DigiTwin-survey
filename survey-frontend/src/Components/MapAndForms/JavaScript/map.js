@@ -1149,7 +1149,7 @@ L.tileLayer(
           <div className="brand-block">
             <div className="brand-mark">G</div>
             <div>
-              <h1 className="brand-title">GeoSurvey Pro</h1>
+              <h1 className="brand-title">GeoSurvey</h1>
               <p className="brand-subtitle">Field Data Collection</p>
             </div>
           </div>
@@ -1251,8 +1251,8 @@ L.tileLayer(
           <div className="layout-right">
             <div className="map-wrapper fade-in-item">
               <div className="map-chip-row">
-                <button className="map-chip active">Satellite View</button>
-                <button className="map-chip">Live Tracking</button>
+                {/* <button className="map-chip active">Satellite View</button> */}
+                {/* <button className="map-chip">Live Tracking</button> */}
               </div>
 
               {loading && (

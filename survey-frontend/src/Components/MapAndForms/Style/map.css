@@ -187,7 +187,7 @@
 }
 
 .page-title {
-  font-size: 28px;
+  font-size: 22px;
   line-height: 1.1;
   font-weight: 700;
 }
@@ -234,7 +234,7 @@
 }
 
 .location-card-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -271,6 +271,8 @@
 
 .signal-banner {
   grid-column: 1 / span 2;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .location-label {
@@ -282,7 +284,7 @@
 
 .location-value {
   margin-top: 4px;
-  font-size: 26px;
+  font-size: 20px;
   line-height: 1;
   font-weight: 700;
 }
@@ -332,7 +334,7 @@
 }
 
 .coord-values .location-value {
-  font-size: 23px;
+  font-size: 18px;
 }
 
 .meta-row {

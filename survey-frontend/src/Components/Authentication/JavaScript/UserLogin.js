@@ -232,3 +232,4 @@ navigate("/map", { replace: true });    }, 1000);
     </div>
   );
 }
+
