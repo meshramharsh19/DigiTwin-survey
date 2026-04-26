@@ -35,8 +35,10 @@ app.use("/api", namuna43Routes);
 // --- MongoDB Connection ---
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/survey';
 mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 15000,
+  connectTimeoutMS: 15000,
+  socketTimeoutMS: 45000,
+  family: 4,
 })
   .then(() => console.log('Successfully connected to MongoDB! (Database: survey)'))
   .catch(err => console.error('MongoDB connection error:', err));
