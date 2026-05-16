@@ -110,9 +110,16 @@ export default function PropertyDetailsForm({ isOpen, onClose, polygonLocation }
 
     try {
 
+      // include polygon geometry if available so backend can persist full polygon
+      const payload = { ...formData };
+      if (polygonLocation && polygonLocation.geometry) {
+        payload.geometry = polygonLocation.geometry;
+        payload.polygonCoordinates = polygonLocation.coordinates;
+      }
+
       await axios.post(
         "http://localhost:5001/api/property-details",
-        formData
+        payload
       );
 
       alert("Property details saved successfully");

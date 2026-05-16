@@ -943,7 +943,9 @@ L.tileLayer(
   // Save centroid for forms
   setPolygonLocation({
     latitude: centroid.lat,
-    longitude: centroid.lng
+    longitude: centroid.lng,
+    geometry: geo.geometry,
+    coordinates: coords
   });
 
   console.log("Polygon centroid:", centroid);

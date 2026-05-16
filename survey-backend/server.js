@@ -772,7 +772,7 @@ const namuna = await mongoose.connection
   properties.forEach(d => {
     features.push({
       type: "Feature",
-      geometry: d.location,
+      geometry: d.geometry || d.location,
       properties: {
         type: "property",
         _id: d._id,
