@@ -3,7 +3,6 @@ import { Map, Lock, User, Eye, EyeOff, MapPin, Compass, Globe } from 'lucide-rea
 import '../Styles/UserLogin.css';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { API_BASE_URL } from '../../../config/endpoints';
 
 
 export default function GISSurveyorLogin() {
@@ -27,7 +26,7 @@ export default function GISSurveyorLogin() {
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/api/auth/login`,
+      "http://localhost:5001/api/auth/login",
       {
         method: "POST",
         headers: {

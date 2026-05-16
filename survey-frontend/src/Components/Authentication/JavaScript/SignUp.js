@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Map, Eye, EyeOff, MapPin, Compass, Globe } from 'lucide-react';
 import '../Styles/SignUp.css';
 import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../../../config/endpoints';
 
 
 export default function GISSurveyorSignup() {
@@ -50,7 +49,7 @@ export default function GISSurveyorSignup() {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+    const response = await fetch("http://localhost:5001/api/auth/signup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

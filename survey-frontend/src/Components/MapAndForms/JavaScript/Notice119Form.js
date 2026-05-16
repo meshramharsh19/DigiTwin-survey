@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { X, Save } from "lucide-react";
 import axios from "axios";
 import "../Style/HouseDetailsModal.css";
-import { API_BASE_URL } from "../../../config/endpoints";
 
 
 import { useNavigate } from "react-router-dom";
@@ -50,7 +49,7 @@ export default function Notice119Form({ isOpen, onClose, polygonLocation }) {
     try {
 
       await axios.post(
-        `${API_BASE_URL}/api/notice119`,
+        "http://localhost:5001/api/notice119",
         formData
       );
 

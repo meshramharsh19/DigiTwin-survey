@@ -9,8 +9,7 @@
 }
 
 .map-container {
-  height: 100dvh;
-  min-height: 100dvh;
+  height: 100vh;
   overflow: hidden;
   box-sizing: border-box;
   background:
@@ -75,8 +74,8 @@
 .survey-topbar {
   min-height: 62px;
   border: 1px solid var(--panel-border);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.94);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
@@ -88,7 +87,15 @@
 .brand-block {
   display: flex;
   align-items: center;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.brand-title-wrap {
+  display: flex;
+  align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .brand-mark {
@@ -113,20 +120,21 @@
   color: var(--muted);
 }
 
-
-.topbar-actions {
+.brand-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 0 0 auto;
+  position: relative;
 }
 
 .icon-btn {
   border: 1px solid var(--panel-border);
   background: #fff;
   color: #4d6788;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
 }
@@ -140,6 +148,52 @@
   border-radius: 999px;
   background: #f4f8ff;
   min-width: 0;
+}
+
+.user-menu-shell {
+  position: relative;
+  min-width: 0;
+}
+
+.user-menu-trigger {
+  cursor: pointer;
+  width: 100%;
+}
+
+.user-menu-caret {
+  flex-shrink: 0;
+  color: #6b86a6;
+}
+
+.user-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 150px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 14px 28px rgba(30, 42, 70, 0.16);
+  overflow: hidden;
+  z-index: 900;
+}
+
+.user-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: #a24f48;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.user-menu-item:hover {
+  background: #fff5f3;
 }
 
 .user-badge {
@@ -198,7 +252,6 @@
   color: var(--muted);
   font-size: 13px;
 }
-
 .main-layout-container {
   flex: 1;
   min-height: 0;
@@ -351,39 +404,58 @@
   padding-top: 12px;
   border-top: 1px solid #e5edf4;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .proceed-button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
+  min-height: 40px;
   border: none;
-  border-radius: 9px;
-  padding: 11px 12px;
-  font-size: 14px;
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 12px;
   font-weight: 700;
   background: linear-gradient(110deg, #0d9978 0%, #06785f 100%);
   color: #fff;
   cursor: pointer;
-  transition: transform 0.18s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  letter-spacing: 0.01em;
 }
 
 .proceed-button:hover {
   transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(6, 120, 95, 0.16);
 }
 
 .proceed-button:disabled {
   cursor: not-allowed;
   background: #9eb5b0;
+  box-shadow: none;
 }
 
 .secondary-action {
-  background: #f4f8ff;
+  background: #f8fbff;
   color: #1a4272;
-  border: 1px solid #c2d6ef;
-  box-shadow: 0 1px 3px rgba(30, 60, 100, 0.06);
+  border: 1px solid #c6d6eb;
+  box-shadow: 0 1px 2px rgba(30, 60, 100, 0.04);
+}
+
+.secondary-action svg {
+  color: #1a4272;
+}
+
+.secondary-action:hover {
+  background: #eef5ff;
+  border-color: #aac3e0;
+  box-shadow: 0 6px 12px rgba(30, 60, 100, 0.08);
+}
+
+.proceed-button svg {
+  flex-shrink: 0;
 }
 
 .secondary-action:hover {
@@ -527,6 +599,26 @@
   place-items: center;
   z-index: 500;
   cursor: pointer;
+}
+
+.map-wrapper .leaflet-top.leaflet-left {
+  top: 12px;
+  left: 12px;
+}
+
+.map-wrapper .leaflet-top.leaflet-right {
+  top: 12px;
+  right: 12px;
+}
+
+.map-wrapper .leaflet-bottom.leaflet-left {
+  bottom: 12px;
+  left: 12px;
+}
+
+.map-wrapper .leaflet-bottom.leaflet-right {
+  bottom: 12px;
+  right: 12px;
 }
 
 .recenter-icon {
@@ -679,21 +771,19 @@
   .main-layout-container {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
-    gap: 10px;
   }
 
   .layout-left {
-    max-height: none;
-    overflow: visible;
+    max-height: 50vh;
   }
 
   .layout-right,
   .map-wrapper {
-    min-height: 360px;
+    min-height: 420px;
   }
 
   .page-title {
-    font-size: 28px;
+    font-size: 30px;
   }
 }
 
@@ -703,181 +793,39 @@
     min-height: 100dvh;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 8px;
     -webkit-overflow-scrolling: touch;
   }
 
   .map-content {
     height: auto;
     min-height: calc(100dvh - 16px);
-    gap: 8px;
   }
 
   .survey-topbar {
-    flex-wrap: wrap;
-    justify-content: flex-start;
     gap: 8px;
-    padding: 10px;
-  }
-
-  .brand-block {
-    width: 100%;
-  }
-
-  .topbar-actions {
-    width: 100%;
-    justify-content: space-between;
-    gap: 6px;
-  }
-
-  .topbar-user {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .user-name {
-    max-width: 100%;
-  }
-
-  .top-logout {
-    padding: 7px 9px;
-    white-space: nowrap;
+    padding: 8px 10px;
   }
 
   .page-head {
-    padding: 0 4px;
+    display: none;
+  }
+
+  .crumb {
+    font-size: 9px;
   }
 
   .page-title {
-    font-size: 20px;
+    font-size: 17px;
+    line-height: 1.02;
   }
 
   .page-subtitle {
-    font-size: 12px;
-  }
-
-  .main-layout-container {
-    gap: 8px;
-  }
-
-  .location-card {
-    padding: 10px;
-    border-radius: 14px;
-  }
-
-  .location-card-header {
-    margin-bottom: 8px;
-  }
-
-  .location-card-title {
-    font-size: 14px;
-  }
-
-  .refresh-button {
-    padding: 6px 9px;
-    font-size: 12px;
-  }
-
-  .location-grid,
-  .coord-values {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  .signal-banner {
-    grid-column: auto;
-  }
-
-  .location-item {
-    padding: 8px;
-  }
-
-  .location-value {
-    font-size: 18px;
-  }
-
-  .coord-values .location-value {
-    font-size: 16px;
-  }
-
-  .meta-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    font-size: 11px;
-  }
-
-  .proceed-button-container {
-    padding-top: 10px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .proceed-button {
-    padding: 10px 12px;
-    font-size: 13px;
-  }
-
-  .proceed-button:first-child {
-    grid-column: 1 / -1;
-  }
-
-  .layout-right,
-  .map-wrapper {
-    min-height: 52vh;
-  }
-
-  .map-chip-row {
-    top: 8px;
-    right: 8px;
-    gap: 6px;
-  }
-
-  .recenter-map-button {
-    width: 38px;
-    height: 38px;
-    right: 12px;
-    bottom: 12px;
-  }
-
-  .leaflet-touch .leaflet-control-layers,
-  .leaflet-touch .leaflet-bar {
-    border-width: 1px;
-    box-shadow: 0 2px 8px rgba(20, 30, 50, 0.18);
-  }
-
-  .leaflet-touch .leaflet-bar a {
-    width: 28px;
-    height: 28px;
-    line-height: 28px;
-  }
-
-  .leaflet-control-attribution {
     font-size: 10px;
-  }
-}
-
-@media (max-width: 420px) {
-  .survey-topbar {
-    border-radius: 10px;
+    line-height: 1.15;
   }
 
-  .topbar-actions {
-    flex-wrap: wrap;
-  }
-
-  .topbar-user {
-    order: 3;
-    width: 100%;
-  }
-
-  .top-logout {
-    order: 4;
-    width: 100%;
-    justify-content: center;
-  }
-
-  .brand-title {
-    font-size: 14px;
+  .brand-actions {
+    gap: 6px;
   }
 
   .brand-subtitle {
@@ -889,34 +837,187 @@
     height: 30px;
   }
 
-  .user-badge {
-    width: 28px;
-    height: 28px;
-  }
-
   .user-name {
+    max-width: 110px;
     font-size: 11px;
   }
 
-  .top-logout {
-    font-size: 12px;
-    gap: 4px;
+  .topbar-user {
+    padding: 2px 8px 2px 2px;
   }
 
-  .location-value {
-    font-size: 17px;
+  .user-menu-dropdown {
+    min-width: 128px;
+  }
+
+  .layout-left {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .location-card {
+    flex: 0 0 auto;
+  }
+
+  .main-layout-container {
+    gap: 6px;
+  }
+
+  .location-card {
+    padding: 7px;
+    border-radius: 12px;
+  }
+
+  .location-card-header {
+    margin-bottom: 5px;
+  }
+
+  .location-card-title {
+    font-size: 12px;
+  }
+
+  .refresh-button {
+    padding: 5px 7px;
+    font-size: 10px;
+  }
+
+  .location-grid,
+  .coord-values {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .signal-banner {
+    grid-column: auto;
+  }
+
+  .meta-row {
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10px;
+  }
+
+  .proceed-button-container {
+    padding-top: 7px;
+    gap: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .proceed-button {
+    padding: 8px 10px;
+    min-height: 38px;
+    font-size: 10px;
+    justify-content: center;
+    gap: 7px;
   }
 
   .layout-right,
   .map-wrapper {
-    min-height: 50vh;
+    min-height: 210px;
   }
 
-  .proceed-button-container {
+  .proceed-button:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .leaflet-control-attribution {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .map-container {
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .survey-topbar {
+    padding: 8px;
     gap: 6px;
   }
 
-  .proceed-button {
-    font-size: 12px;
+  .brand-subtitle {
+    display: none;
+  }
+
+  .page-head {
+    padding: 0 2px;
+  }
+
+  .page-title {
+    font-size: 16px;
+  }
+
+  .page-subtitle {
+    font-size: 10px;
+  }
+
+  .icon-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .user-badge {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+  }
+
+  .user-name {
+    max-width: 92px;
+    font-size: 10px;
+  }
+
+  .user-menu-dropdown {
+    right: 0;
+  }
+
+  .location-card {
+    padding: 7px;
+  }
+
+  .location-value {
+    font-size: 15px;
+  }
+
+  .coord-values .location-value {
+    font-size: 13px;
+  }
+
+  .layout-right,
+  .map-wrapper {
+    min-height: 210px;
+  }
+
+  .recenter-map-button {
+    bottom: 12px;
+    right: 12px;
+  }
+
+  .map-wrapper .leaflet-top.leaflet-left {
+    top: 10px;
+    left: 10px;
+  }
+
+  .map-wrapper .leaflet-top.leaflet-right {
+    top: 10px;
+    right: 10px;
+  }
+
+  .map-wrapper .leaflet-bottom.leaflet-left {
+    bottom: 10px;
+    left: 10px;
+  }
+
+  .map-wrapper .leaflet-bottom.leaflet-right {
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .recenter-map-button {
+    bottom: 10px;
+    right: 10px;
   }
 }
