@@ -19,9 +19,7 @@ router.post("/notice119", async (req, res) => {
       proposedTax,
       noticeDate,
       latitude,
-      longitude,
-      polygonGeometry,
-      polygonCoordinates
+      longitude
     } = req.body;
 
     const noticeData = {
@@ -49,14 +47,6 @@ router.post("/notice119", async (req, res) => {
       };
 
       noticeData.centroid = [lng, lat];
-
-      if (polygonGeometry) {
-        noticeData.polygonGeometry = polygonGeometry;
-      }
-
-      if (polygonCoordinates) {
-        noticeData.polygonCoordinates = polygonCoordinates;
-      }
 
       noticeData.style = {
         color: "#ff9800",

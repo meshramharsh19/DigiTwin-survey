@@ -15,9 +15,7 @@ const initialState = {
   hearingTime: "",
   hearingLocation: "",
   latitude: "",
-  longitude: "",
-  polygonGeometry: null,
-  polygonCoordinates: null
+  longitude: ""
 };
 
 export default function HearingNoticeForm({ isOpen, onClose, polygonLocation }) {
@@ -29,9 +27,7 @@ export default function HearingNoticeForm({ isOpen, onClose, polygonLocation }) 
     setFormData(prev => ({
       ...prev,
       latitude: polygonLocation.latitude,
-      longitude: polygonLocation.longitude,
-      polygonGeometry: polygonLocation.geometry || null,
-      polygonCoordinates: polygonLocation.coordinates || null
+      longitude: polygonLocation.longitude
     }));
   }
 }, [polygonLocation]);

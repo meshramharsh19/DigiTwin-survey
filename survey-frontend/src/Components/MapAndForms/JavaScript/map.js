@@ -675,7 +675,6 @@ import tokml from 'tokml'; // KML export ke liye
 import { io } from 'socket.io-client';
 import '../Style/map.css';
 import FormSelectionModal from './FormSelectionModal';
-import HouseDetailsModal from './HouseDetailsModal';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Authentication/JavaScript/AuthContext";
 
@@ -718,7 +717,6 @@ export default function MapComponent() {
   const [selectedForm, setSelectedForm] = useState(null);
   const [capturedLocation, setCapturedLocation] = useState(null);
   const [polygonLocation, setPolygonLocation] = useState(null);
-  const [isModalOpen, setModalOpen] = useState(false);
 
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -871,7 +869,6 @@ export default function MapComponent() {
       // create map once
       const map = L.map(mapRef.current, {
         zoomControl: true,
-        doubleClickZoom: false,
       }).setView(userPosition, 19);
 
       // Retina-aware Google Satellite (HD)
@@ -946,27 +943,12 @@ L.tileLayer(
   // Save centroid for forms
   setPolygonLocation({
     latitude: centroid.lat,
-    longitude: centroid.lng,
-    geometry: geo.geometry,
-    coordinates: coords
+    longitude: centroid.lng
   });
 
   console.log("Polygon centroid:", centroid);
 
 });
-
-      map.on('dblclick', function (event) {
-        setCapturedLocation({
-          lat: event.latlng.lat,
-          lng: event.latlng.lng,
-          accuracy: location.accuracy,
-          altitude: location.altitude,
-          altitudeAccuracy: location.altitudeAccuracy,
-          heading: location.heading,
-          speed: location.speed,
-        });
-        setModalOpen(true);
-      });
 
       // --- NAYA CODE (LEAFLET-DRAW) KHATAM ---
     }
@@ -1011,61 +993,10 @@ L.tileLayer(
   const handleProceedClick = () => {
     if (location) {
       setCapturedLocation(location);
-      setModalOpen(true);
+     setFormSelectorOpen(true); 
     } else {
       alert('Location not available. Please wait or refresh.');
     }
-  };
-
-  const handleSaveSurvey = (formData) => {
-    const kmlString = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
- <Placemark>
-   <name>${formData.propertyName || formData.houseNumber || 'Survey Point'}</name>
-   <description>
-     Owner: ${formData.ownerName}
-     Occupier: ${formData.occupierName}
-     Address: ${formData.propertyAddress}
-     Usage: ${formData.usageOfProperty}
-     Total Area: ${formData.totalArea}
-   </description>
-   <Point>
-     <coordinates>${capturedLocation.lng},${capturedLocation.lat},${capturedLocation.altitude || 0}</coordinates>
-   </Point>
- </Placemark>
-</kml>`;
-
-    const surveyData = {
-      ...formData,
-      location: {
-        type: 'Point',
-        coordinates: [capturedLocation.lng, capturedLocation.lat],
-      },
-      accuracy: capturedLocation.accuracy,
-      kmlData: kmlString,
-    };
-
-    delete surveyData.photos;
-
-    fetch('http://localhost:5001/api/save-survey', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(surveyData),
-    })
-      .then(async (res) => {
-        const json = await res.json();
-        if (!res.ok) throw json;
-        return json;
-      })
-      .then(() => {
-        alert('Survey saved successfully');
-      })
-      .catch((error) => {
-        console.error(error);
-        alert('Failed to save survey');
-      });
   };
   const handleFormSelect = (formType) => {
   setFormSelectorOpen(false);
@@ -1416,13 +1347,6 @@ L.tileLayer(
   polygonLocation={polygonLocation}
 />
 )}
-
-      <HouseDetailsModal
-        isOpen={isModalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSaveSurvey}
-        capturedLocation={capturedLocation}
-      />
 
     </div>
   );

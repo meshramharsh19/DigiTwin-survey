@@ -14,9 +14,7 @@ const initialState = {
   revisedTax: "",
   appealReason: "",
   latitude: "",
-  longitude: "",
-  polygonGeometry: null,
-  polygonCoordinates: null
+  longitude: ""
 };
 
 export default function AppealForm({ isOpen, onClose, polygonLocation }){
@@ -27,9 +25,7 @@ export default function AppealForm({ isOpen, onClose, polygonLocation }){
     setFormData((prev) => ({
       ...prev,
       latitude: polygonLocation.latitude,
-      longitude: polygonLocation.longitude,
-      polygonGeometry: polygonLocation.geometry || null,
-      polygonCoordinates: polygonLocation.coordinates || null
+      longitude: polygonLocation.longitude
     }));
   }
 }, [polygonLocation]);

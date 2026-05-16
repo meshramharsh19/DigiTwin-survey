@@ -281,35 +281,6 @@ function buildKmlForParcel({
 </kml>`;
 }
 
-function normalizeGeoJsonGeometry(doc) {
-  if (!doc) return null;
-
-  if (doc.geometry && doc.geometry.type) {
-    return doc.geometry;
-  }
-
-  if (doc.polygonGeometry && doc.polygonGeometry.type) {
-    return doc.polygonGeometry;
-  }
-
-  if (doc.polygonCoordinates) {
-    return {
-      type: 'Polygon',
-      coordinates: doc.polygonCoordinates
-    };
-  }
-
-  if (doc.location && Array.isArray(doc.location.coordinates)) {
-    return { type: 'Point', coordinates: doc.location.coordinates };
-  }
-
-  if (Array.isArray(doc.centroid)) {
-    return { type: 'Point', coordinates: [doc.centroid[0], doc.centroid[1]] };
-  }
-
-  return null;
-}
-
 
 // ---------------------------------------------------------------------------
 // /api/save-survey
@@ -726,7 +697,19 @@ app.get('/api/3d/surveys', async (req, res) => {
     const docs = await SurveyEntry.find(q).sort({ createdAt: -1 }).limit(Number(limit)).lean();
 
     const features = docs.map(d => {
-      const geometry = normalizeGeoJsonGeometry(d);
+      // use polygon/geometry if saved (you use polygons -> KML), otherwise fallback to location/centroid
+      let geometry = d.geometry || null;
+
+      if (!geometry) {
+        if (d.kmlData) {
+          // don't convert here (heavy) — prefer using kmlUrl in client.
+          geometry = null;
+        } else if (d.location && Array.isArray(d.location.coordinates)) {
+          geometry = { type: 'Point', coordinates: d.location.coordinates };
+        } else if (Array.isArray(d.centroid)) {
+          geometry = { type: 'Point', coordinates: [d.centroid[0], d.centroid[1]] };
+        }
+      }
 
       return {
         type: 'Feature',
@@ -786,42 +769,85 @@ const namuna = await mongoose.connection
 
   const features = [];
 
-  const toFeature = (doc, type) => ({
-    type: "Feature",
-    geometry: normalizeGeoJsonGeometry(doc),
-    properties: {
-      type,
-      _id: doc._id,
-      ownerName: doc.ownerName,
-      propertyNumber: doc.propertyNumber || doc.propertyNo || doc.newPropertyNo,
-      propertyAddress: doc.propertyAddress || doc.address,
-      kmlUrl: doc.kmlUrl || null,
-      style: doc.style || null,
-    }
-  });
-
   properties.forEach(d => {
-    features.push(toFeature(d, "property"));
+    features.push({
+      type: "Feature",
+      geometry: d.location,
+      properties: {
+        type: "property",
+        _id: d._id,
+        ownerName: d.ownerName,
+        propertyNumber: d.propertyNumber,
+        propertyAddress: d.propertyAddress,
+      }
+    });
   });
 
   surveys.forEach(d => {
-    features.push(toFeature(d, "survey"));
+    features.push({
+      type: "Feature",
+      geometry: d.location,
+      properties: {
+        type: "survey",
+        _id: d._id,
+        ownerName: d.ownerName,
+        propertyNumber: d.propertyNumber,
+        propertyAddress: d.propertyAddress
+      }
+    });
   });
 
   appeals.forEach(d => {
-  features.push(toFeature(d, "appeal"));
+  features.push({
+    type: "Feature",
+    geometry: d.location,
+    properties: {
+      type: "appeal",
+      _id: d._id,
+      ownerName: d.ownerName,
+      propertyNo: d.propertyNo,
+    }
+  });
 });
 
   hearings.forEach(d => {
-    features.push(toFeature(d, "hearing"));
+    features.push({
+      type: "Feature",
+      geometry: d.location,
+      properties: {
+        type: "hearing",
+        _id: d._id,
+         ownerName: d.ownerName,
+        propertyNo: d.propertyNo,
+      }
+    });
   });
 
   notices.forEach(d => {
-    features.push(toFeature(d, "notice119"));
+    features.push({
+      type: "Feature",
+      geometry: d.location,
+      properties: {
+        type: "notice119",
+        _id: d._id,
+        ownerName: d.ownerName,
+        newPropertyNo: d.newPropertyNo,
+        
+      }
+    });
   });
 
   namuna.forEach(d => {
-    features.push(toFeature(d, "namuna43"));
+    features.push({
+      type: "Feature",
+      geometry: d.location || d.geometry,
+      properties: {
+        type: "namuna43",
+        _id: d._id,
+        ownerName: d.ownerName,
+        propertyNo: d.propertyNo,
+      }
+    });
   });
 
   res.json({
@@ -836,7 +862,12 @@ app.get('/api/3d/surveys/:id', async (req, res) => {
     const d = await SurveyEntry.findById(req.params.id).lean();
     if (!d) return res.status(404).json({ error: 'not found' });
 
-    const geometry = normalizeGeoJsonGeometry(d);
+    let geometry = d.geometry || null;
+    if (!geometry && d.location && Array.isArray(d.location.coordinates)) {
+      geometry = { type: 'Point', coordinates: d.location.coordinates };
+    } else if (!geometry && Array.isArray(d.centroid)) {
+      geometry = { type: 'Point', coordinates: [d.centroid[0], d.centroid[1]] };
+    }
 
     const feature = {
       type: 'Feature',

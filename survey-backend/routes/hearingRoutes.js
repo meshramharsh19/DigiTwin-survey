@@ -18,9 +18,7 @@ router.post("/hearing-notice", async (req, res) => {
       hearingTime,
       hearingLocation,
       latitude,
-      longitude,
-      polygonGeometry,
-      polygonCoordinates
+      longitude
     } = req.body;
 
     const hearingData = {
@@ -47,14 +45,6 @@ router.post("/hearing-notice", async (req, res) => {
       };
 
       hearingData.centroid = [lng, lat];
-
-      if (polygonGeometry) {
-        hearingData.polygonGeometry = polygonGeometry;
-      }
-
-      if (polygonCoordinates) {
-        hearingData.polygonCoordinates = polygonCoordinates;
-      }
 
       hearingData.style = {
         color: "#ff9900",
