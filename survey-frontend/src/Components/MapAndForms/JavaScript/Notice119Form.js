@@ -17,7 +17,9 @@ const initialState = {
   proposedTax: "",
   noticeDate: "",
   latitude: "",
-  longitude: ""
+  longitude: "",
+  polygonGeometry: null,
+  polygonCoordinates: null
 };
 
 export default function Notice119Form({ isOpen, onClose, polygonLocation }) {
@@ -29,7 +31,9 @@ export default function Notice119Form({ isOpen, onClose, polygonLocation }) {
     setFormData(prev => ({
       ...prev,
       latitude: polygonLocation.latitude,
-      longitude: polygonLocation.longitude
+      longitude: polygonLocation.longitude,
+      polygonGeometry: polygonLocation.geometry || null,
+      polygonCoordinates: polygonLocation.coordinates || null
     }));
   }
   }, [polygonLocation]);

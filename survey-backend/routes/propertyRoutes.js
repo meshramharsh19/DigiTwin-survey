@@ -32,7 +32,9 @@ router.post("/property-details", async (req, res) => {
       fireTax,
       totalTax,
       latitude,
-      longitude
+      longitude,
+      polygonGeometry,
+      polygonCoordinates
     } = req.body;
 
     const propertyData = {
@@ -73,6 +75,14 @@ router.post("/property-details", async (req, res) => {
       };
 
       propertyData.centroid = [lng, lat];
+
+      if (polygonGeometry) {
+        propertyData.polygonGeometry = polygonGeometry;
+      }
+
+      if (polygonCoordinates) {
+        propertyData.polygonCoordinates = polygonCoordinates;
+      }
 
       propertyData.style = {
         color: "#009688",

@@ -16,7 +16,9 @@ router.post("/namuna43", async (req, res) => {
       noticeReason,
       noticeDate,
       latitude,
-      longitude
+      longitude,
+      polygonGeometry,
+      polygonCoordinates
     } = req.body;
 
     const noticeData = {
@@ -42,6 +44,14 @@ router.post("/namuna43", async (req, res) => {
       };
 
       noticeData.centroid = [lng, lat];
+
+      if (polygonGeometry) {
+        noticeData.polygonGeometry = polygonGeometry;
+      }
+
+      if (polygonCoordinates) {
+        noticeData.polygonCoordinates = polygonCoordinates;
+      }
 
       noticeData.style = {
         color: "#00a65a",

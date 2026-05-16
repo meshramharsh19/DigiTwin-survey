@@ -15,7 +15,9 @@ router.post("/appeal", async (req, res) => {
       revisedTax,
       appealReason,
       latitude,
-      longitude
+      longitude,
+      polygonGeometry,
+      polygonCoordinates
     } = req.body;
 
     const appealData = {
@@ -44,6 +46,14 @@ router.post("/appeal", async (req, res) => {
 
       // centroid
       appealData.centroid = [lng, lat];
+
+      if (polygonGeometry) {
+        appealData.polygonGeometry = polygonGeometry;
+      }
+
+      if (polygonCoordinates) {
+        appealData.polygonCoordinates = polygonCoordinates;
+      }
 
       // style for map
       appealData.style = {

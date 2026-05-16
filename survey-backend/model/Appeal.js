@@ -49,6 +49,14 @@ centroid: {
   type: [Number]
     },
 
+  polygonGeometry: {
+    type: mongoose.Schema.Types.Mixed
+  },
+
+  polygonCoordinates: {
+    type: [[[Number]]]
+  },
+
   style: {
     color: String,
     opacity: Number,
