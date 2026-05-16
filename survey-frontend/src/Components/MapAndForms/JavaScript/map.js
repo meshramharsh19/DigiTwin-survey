@@ -665,7 +665,7 @@
 // MapComponent.js (ready to paste)
 import { useState, useEffect, useRef, useCallback } from 'react';
 // --- NAYA IMPORT (Download icon ke liye) ---
-import { MapPin, Navigation, Loader, Crosshair, CheckSquare, Download, Sun, Moon, Satellite, LogOut, ChevronDown } from 'lucide-react';
+import { MapPin, Navigation, Loader, Crosshair, CheckSquare, Download, Sun, Moon, Satellite, LogOut } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 // --- NAYE IMPORTS (Leaflet-Draw ke liye) ---
@@ -717,7 +717,6 @@ export default function MapComponent() {
   const [selectedForm, setSelectedForm] = useState(null);
   const [capturedLocation, setCapturedLocation] = useState(null);
   const [polygonLocation, setPolygonLocation] = useState(null);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -725,7 +724,6 @@ export default function MapComponent() {
   const circleRef = useRef(null);
   const drawnItemsRef = useRef(null);
   const staticAppliedRef = useRef(false);
-  const userMenuRef = useRef(null);
 
   const { isAuthenticated, authLoading, logout, user } = useAuth();
   const navigate = useNavigate();
@@ -752,21 +750,9 @@ export default function MapComponent() {
     .join("") || "SU";
 
   const handleLogout = () => {
-    setUserMenuOpen(false);
     logout();
     navigate("/", { replace: true });
   };
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
-        setUserMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -957,9 +943,7 @@ L.tileLayer(
   // Save centroid for forms
   setPolygonLocation({
     latitude: centroid.lat,
-    longitude: centroid.lng,
-    geometry: geo.geometry,
-    coordinates: coords
+    longitude: centroid.lng
   });
 
   console.log("Polygon centroid:", centroid);
@@ -1163,40 +1147,23 @@ L.tileLayer(
       <div className="map-content">
         <header className="survey-topbar fade-in-item">
           <div className="brand-block">
-            <div className="brand-title-wrap">
-              <div className="brand-mark">G</div>
-              <div>
-                <h1 className="brand-title">GeoSurvey</h1>
-                <p className="brand-subtitle">Field Data Collection</p>
-              </div>
+            <div className="brand-mark">G</div>
+            <div>
+              <h1 className="brand-title">GeoSurvey</h1>
+              <p className="brand-subtitle">Field Data Collection</p>
             </div>
           </div>
-          <div className="brand-actions">
+          <div className="topbar-actions">
             <button className="icon-btn theme-toggle" onClick={toggleTheme} title={darkMode ? 'Switch to Light' : 'Switch to Dark'}>
               {darkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <div className="user-menu-shell" ref={userMenuRef}>
-              <button
-                type="button"
-                className="topbar-user user-menu-trigger"
-                onClick={() => setUserMenuOpen((prev) => !prev)}
-                aria-haspopup="menu"
-                aria-expanded={userMenuOpen}
-              >
-                <span className="user-badge">{initials}</span>
-                <span className="user-name" title={displayName}>{displayName}</span>
-                <ChevronDown size={14} className="user-menu-caret" />
-              </button>
-
-              {userMenuOpen && (
-                <div className="user-menu-dropdown" role="menu" aria-label="User menu">
-                  <button type="button" className="user-menu-item" onClick={handleLogout} role="menuitem">
-                    <LogOut size={14} />
-                    Logout
-                  </button>
-                </div>
-              )}
+            <div className="topbar-user">
+              <span className="user-badge">{initials}</span>
+              <span className="user-name" title={displayName}>{displayName}</span>
             </div>
+            <button className="top-logout" onClick={handleLogout}>
+              <LogOut size={15} /> Logout
+            </button>
           </div>
         </header>
 
