@@ -9,7 +9,8 @@
 }
 
 .map-container {
-  height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
   overflow: hidden;
   box-sizing: border-box;
   background:
@@ -74,8 +75,8 @@
 .survey-topbar {
   min-height: 62px;
   border: 1px solid var(--panel-border);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.92);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
@@ -678,40 +679,244 @@
   .main-layout-container {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
+    gap: 10px;
   }
 
   .layout-left {
-    max-height: 50vh;
+    max-height: none;
+    overflow: visible;
   }
 
   .layout-right,
   .map-wrapper {
-    min-height: 420px;
+    min-height: 360px;
   }
 
   .page-title {
-    font-size: 30px;
+    font-size: 28px;
   }
 }
 
 @media (max-width: 760px) {
+  .map-container {
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .map-content {
+    height: auto;
+    min-height: calc(100dvh - 16px);
+    gap: 8px;
+  }
+
   .survey-topbar {
     flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .brand-block {
+    width: 100%;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .topbar-user {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .user-name {
+    max-width: 100%;
+  }
+
+  .top-logout {
+    padding: 7px 9px;
+    white-space: nowrap;
+  }
+
+  .page-head {
+    padding: 0 4px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 12px;
+  }
+
+  .main-layout-container {
+    gap: 8px;
+  }
+
+  .location-card {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .location-card-header {
+    margin-bottom: 8px;
+  }
+
+  .location-card-title {
+    font-size: 14px;
+  }
+
+  .refresh-button {
+    padding: 6px 9px;
+    font-size: 12px;
   }
 
   .location-grid,
   .coord-values {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .signal-banner {
     grid-column: auto;
   }
 
+  .location-item {
+    padding: 8px;
+  }
+
+  .location-value {
+    font-size: 18px;
+  }
+
+  .coord-values .location-value {
+    font-size: 16px;
+  }
+
   .meta-row {
     flex-direction: column;
+    align-items: flex-start;
     gap: 4px;
+    font-size: 11px;
+  }
+
+  .proceed-button-container {
+    padding-top: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .proceed-button {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .proceed-button:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .layout-right,
+  .map-wrapper {
+    min-height: 52vh;
+  }
+
+  .map-chip-row {
+    top: 8px;
+    right: 8px;
+    gap: 6px;
+  }
+
+  .recenter-map-button {
+    width: 38px;
+    height: 38px;
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .leaflet-touch .leaflet-control-layers,
+  .leaflet-touch .leaflet-bar {
+    border-width: 1px;
+    box-shadow: 0 2px 8px rgba(20, 30, 50, 0.18);
+  }
+
+  .leaflet-touch .leaflet-bar a {
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+  }
+
+  .leaflet-control-attribution {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .survey-topbar {
+    border-radius: 10px;
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap;
+  }
+
+  .topbar-user {
+    order: 3;
+    width: 100%;
+  }
+
+  .top-logout {
+    order: 4;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .brand-title {
+    font-size: 14px;
+  }
+
+  .brand-subtitle {
+    font-size: 10px;
+  }
+
+  .icon-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .user-badge {
+    width: 28px;
+    height: 28px;
+  }
+
+  .user-name {
+    font-size: 11px;
+  }
+
+  .top-logout {
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .location-value {
+    font-size: 17px;
+  }
+
+  .layout-right,
+  .map-wrapper {
+    min-height: 50vh;
+  }
+
+  .proceed-button-container {
+    gap: 6px;
+  }
+
+  .proceed-button {
+    font-size: 12px;
   }
 }

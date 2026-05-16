@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Save } from "lucide-react";
 import axios from "axios";
 import "../Style/PropertyDetailsForm.css";
+import { API_BASE_URL } from "../../../config/endpoints";
 
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -118,7 +119,7 @@ export default function PropertyDetailsForm({ isOpen, onClose, polygonLocation }
       }
 
       await axios.post(
-        "http://localhost:5001/api/property-details",
+        `${API_BASE_URL}/api/property-details`,
         payload
       );
 

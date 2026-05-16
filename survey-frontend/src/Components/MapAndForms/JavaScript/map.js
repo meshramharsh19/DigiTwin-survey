@@ -673,6 +673,7 @@ import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-draw';
 import tokml from 'tokml'; // KML export ke liye
 import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../../config/endpoints';
 import '../Style/map.css';
 import FormSelectionModal from './FormSelectionModal';
 import { useNavigate } from "react-router-dom";
@@ -685,7 +686,7 @@ import AppealForm from './AppealForm';
 import Namuna43Form from './Namuna43Form';
 
 // Socket.io client setup
-const socket = io('http://localhost:5001'); // change origin in prod
+const socket = io(SOCKET_URL);
   socket.on('connect', () => console.log('connected', socket.id));
   socket.on('survey:created', (data) => {
     console.log('New survey created:', data);
@@ -1102,7 +1103,7 @@ L.tileLayer(
     createdFrom: "digital-twin",
   };
 
-  fetch("http://localhost:5001/api/road-survey/save", {
+  fetch(`${API_BASE_URL}/api/road-survey/save`, {
   // ✅ ONLY THIS CHANGE
     method: "POST",
     headers: {

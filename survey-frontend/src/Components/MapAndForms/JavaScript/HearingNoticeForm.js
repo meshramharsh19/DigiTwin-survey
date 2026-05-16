@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Save } from "lucide-react";
 import axios from "axios";
 import "../Style/HouseDetailsModal.css";
+import { API_BASE_URL } from "../../../config/endpoints";
 
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -46,7 +47,7 @@ export default function HearingNoticeForm({ isOpen, onClose, polygonLocation }) 
     try {
 
       await axios.post(
-        "http://localhost:5001/api/hearing-notice",
+        `${API_BASE_URL}/api/hearing-notice`,
         formData
       );
 
