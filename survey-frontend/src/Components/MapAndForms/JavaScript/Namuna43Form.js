@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { X, Save } from "lucide-react";
+import { X, Save, UploadCloud } from "lucide-react";
 import axios from "axios";
 import "../Style/HouseDetailsModal.css";
 
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { DocumentAutofillOverlay, mergeDraftValues, useDocumentAutofill } from "./documentAutofillHelpers";
 
 const initialState = {
   ownerName: "",
@@ -17,9 +18,35 @@ const initialState = {
   longitude: ""
 };
 
+const NAMUNA43_FIELD_DEFINITIONS = [
+  { name: "ownerName", patterns: [/owner\s*name/i, /name\s*of\s*owner/i] },
+  { name: "ward", patterns: [/ward/i] },
+  { name: "zone", patterns: [/zone/i] },
+  { name: "propertyNo", patterns: [/property\s*no\.?/i, /property\s*number/i] },
+  { name: "noticeReason", patterns: [/notice\s*reason/i, /reason/i] },
+  { name: "noticeDate", patterns: [/notice\s*date/i, /date/i], type: "date" }
+];
+
 export default function Namuna43Form({ isOpen, onClose, polygonLocation }) {
 
   const [formData, setFormData] = useState(initialState);
+  const {
+    fileInputRef,
+    documentFile,
+    isAutofillPanelOpen,
+    setIsAutofillPanelOpen,
+    importError,
+    isAnalyzing,
+    draftPreview,
+    openDocumentPicker,
+    handleDocumentChange,
+    handleDocumentDrop,
+    handleDocumentDragOver
+  } = useDocumentAutofill(NAMUNA43_FIELD_DEFINITIONS, {
+    onDraft: (draft) => {
+      setFormData((previousState) => mergeDraftValues(previousState, draft));
+    }
+  });
 
   useEffect(() => {
   if (polygonLocation) {
@@ -34,10 +61,10 @@ export default function Namuna43Form({ isOpen, onClose, polygonLocation }) {
   const navigate = useNavigate();
   
   const handleChange = (e) =>
-    setFormData({
-      ...formData,
+    setFormData((previousState) => ({
+      ...previousState,
       [e.target.name]: e.target.value
-    });
+    }));
 
   const handleSave = async () => {
 
@@ -84,6 +111,8 @@ export default function Namuna43Form({ isOpen, onClose, polygonLocation }) {
         </div>
 
         <div className="modal-body">
+
+          <div className={`form-content-shell ${isAutofillPanelOpen ? "is-blurred" : ""}`}>
 
           <fieldset>
             <legend>Notice Information</legend>
@@ -150,9 +179,19 @@ export default function Namuna43Form({ isOpen, onClose, polygonLocation }) {
 
           </fieldset>
 
+          </div>
+
         </div>
 
-        <div className="modal-footer">
+        <div className={`modal-footer ${isAutofillPanelOpen ? "is-blurred" : ""}`}>
+
+          <button
+            type="button"
+            onClick={() => setIsAutofillPanelOpen(true)}
+            className="button-ghost footer-autofill-button"
+          >
+            <UploadCloud size={16} /> Doc Autofill
+          </button>
 
           <button onClick={onClose} className="button-secondary">
             Cancel
@@ -163,6 +202,22 @@ export default function Namuna43Form({ isOpen, onClose, polygonLocation }) {
           </button>
 
         </div>
+
+        <DocumentAutofillOverlay
+          isOpen={isAutofillPanelOpen}
+          onClose={() => setIsAutofillPanelOpen(false)}
+          title="Upload Namuna 43 hardcopy, auto-fill the form"
+          description="Upload a scanned Namuna 43 document and the extracted values will populate the notice fields automatically."
+          fileInputRef={fileInputRef}
+          openDocumentPicker={openDocumentPicker}
+          documentFile={documentFile}
+          isAnalyzing={isAnalyzing}
+          importError={importError}
+          draftPreview={draftPreview}
+          handleDocumentChange={handleDocumentChange}
+          handleDocumentDrop={handleDocumentDrop}
+          handleDocumentDragOver={handleDocumentDragOver}
+        />
 
       </div>
     </div>

@@ -1,20 +1,13 @@
-import { useState, useEffect, useRef } from "react";
-import { X, Save, Sparkles, UploadCloud } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Save, UploadCloud } from "lucide-react";
 import axios from "axios";
-import { createWorker } from "tesseract.js";
-import * as pdfjsLib from "pdfjs-dist";
 import "../Style/PropertyDetailsForm.css";
+import { DocumentAutofillOverlay, mergeDraftValues, useDocumentAutofill } from "./documentAutofillHelpers";
 
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).toString();
-
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5001";
-const OCR_PAGE_LIMIT = 2;
 
 const initialState = {
   ownerName: "",
@@ -45,209 +38,42 @@ const initialState = {
   longitude: ""
 };
 
-const AUTOFILL_FIELDS = [
-  "ownerName",
-  "occupierName",
-  "address",
-  "mobile",
-  "ward",
-  "zone",
-  "newPropertyNo",
-  "oldPropertyNo",
-  "usageType",
-  "constructionType",
-  "constructionYear",
-  "area",
-  "rate",
-  "latitude",
-  "longitude"
+const PROPERTY_FIELD_DEFINITIONS = [
+  { name: "ownerName", patterns: [/owner\s*name/i, /name\s*of\s*owner/i] },
+  { name: "occupierName", patterns: [/occupier\s*name/i] },
+  { name: "address", patterns: [/address/i] },
+  { name: "mobile", patterns: [/mobile/i, /phone/i], type: "mobile" },
+  { name: "ward", patterns: [/ward/i] },
+  { name: "zone", patterns: [/zone/i] },
+  { name: "newPropertyNo", patterns: [/new\s*property\s*no\.?/i, /property\s*no\.?/i] },
+  { name: "oldPropertyNo", patterns: [/old\s*property\s*no\.?/i] },
+  { name: "usageType", patterns: [/usage\s*type/i] },
+  { name: "constructionType", patterns: [/construction\s*type/i] },
+  { name: "constructionYear", patterns: [/construction\s*year/i, /year\s*of\s*construction/i], type: "number" },
+  { name: "area", patterns: [/area/i, /built\s*up\s*area/i], type: "number" },
+  { name: "rate", patterns: [/rate/i], type: "number" }
 ];
-
-function applyDraftToForm(previousState, draft = {}) {
-  const nextState = { ...previousState };
-
-  AUTOFILL_FIELDS.forEach((fieldName) => {
-    const value = draft[fieldName];
-    const hasValue =
-      value !== undefined &&
-      value !== null &&
-      !(typeof value === "string" && value.trim() === "");
-
-    if (hasValue) {
-      nextState[fieldName] = value;
-    }
-  });
-
-  return nextState;
-}
-
-function formatFileSize(sizeInBytes) {
-  if (!sizeInBytes && sizeInBytes !== 0) return "";
-  if (sizeInBytes < 1024) return `${sizeInBytes} B`;
-  if (sizeInBytes < 1024 * 1024) return `${(sizeInBytes / 1024).toFixed(1)} KB`;
-  return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function normalizeOcrText(text) {
-  return String(text || "")
-    .replace(/\r/g, " ")
-    .replace(/\n+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function extractLabeledValue(text, labelPatterns, allLabelPatterns) {
-  const normalizedText = normalizeOcrText(text);
-  let bestMatch = null;
-
-  for (const pattern of labelPatterns) {
-    const match = normalizedText.match(pattern);
-    if (match && typeof match.index === "number") {
-      const labelEndIndex = match.index + match[0].length;
-      if (!bestMatch || match.index < bestMatch.index || (match.index === bestMatch.index && labelEndIndex > bestMatch.labelEndIndex)) {
-        bestMatch = {
-          index: match.index,
-          labelEndIndex
-        };
-      }
-    }
-  }
-
-  if (!bestMatch) {
-    return "";
-  }
-
-  let nextLabelIndex = normalizedText.length;
-  for (const pattern of allLabelPatterns) {
-    const nextMatch = normalizedText.slice(bestMatch.labelEndIndex).match(pattern);
-    if (nextMatch && typeof nextMatch.index === "number") {
-      const absoluteIndex = bestMatch.labelEndIndex + nextMatch.index;
-      if (absoluteIndex < nextLabelIndex) {
-        nextLabelIndex = absoluteIndex;
-      }
-    }
-  }
-
-  return normalizedText
-    .slice(bestMatch.labelEndIndex, nextLabelIndex)
-    .replace(/^[:\-\s]+/, "")
-    .replace(/[|]+$/g, "")
-    .trim();
-}
-
-function extractDraftFromText(documentText = "") {
-  const text = String(documentText || "");
-
-  const fieldLabelPatterns = {
-    ownerName: [/owner\s*name/i, /name\s*of\s*owner/i],
-    occupierName: [/occupier\s*name/i],
-    address: [/address/i],
-    mobile: [/mobile/i, /phone/i],
-    ward: [/ward/i],
-    zone: [/zone/i],
-    newPropertyNo: [/new\s*property\s*no\.?/i, /property\s*no\.?/i],
-    oldPropertyNo: [/old\s*property\s*no\.?/i],
-    usageType: [/usage\s*type/i],
-    constructionType: [/construction\s*type/i],
-    constructionYear: [/construction\s*year/i, /year\s*of\s*construction/i],
-    area: [/area/i, /built\s*up\s*area/i],
-    rate: [/rate/i]
-  };
-
-  const allLabelPatterns = Object.values(fieldLabelPatterns).flat();
-
-  return {
-    ownerName: extractLabeledValue(text, fieldLabelPatterns.ownerName, allLabelPatterns),
-    occupierName: extractLabeledValue(text, fieldLabelPatterns.occupierName, allLabelPatterns),
-    address: extractLabeledValue(text, fieldLabelPatterns.address, allLabelPatterns),
-    mobile: extractLabeledValue(text, fieldLabelPatterns.mobile, allLabelPatterns).match(/[0-9+\-()\s]{7,}/)?.[0]?.trim() || "",
-    ward: extractLabeledValue(text, fieldLabelPatterns.ward, allLabelPatterns).match(/[0-9A-Za-z]+/)?.[0]?.trim() || "",
-    zone: extractLabeledValue(text, fieldLabelPatterns.zone, allLabelPatterns).match(/[0-9A-Za-z]+/)?.[0]?.trim() || "",
-    newPropertyNo: extractLabeledValue(text, fieldLabelPatterns.newPropertyNo, allLabelPatterns).match(/[0-9A-Za-z/-]+/)?.[0]?.trim() || "",
-    oldPropertyNo: extractLabeledValue(text, fieldLabelPatterns.oldPropertyNo, allLabelPatterns).match(/[0-9A-Za-z/-]+/)?.[0]?.trim() || "",
-    usageType: extractLabeledValue(text, fieldLabelPatterns.usageType, allLabelPatterns).match(/[A-Za-z]+/)?.[0]?.trim() || "",
-    constructionType: extractLabeledValue(text, fieldLabelPatterns.constructionType, allLabelPatterns).match(/[A-Za-z0-9]+/)?.[0]?.trim() || "",
-    constructionYear: extractLabeledValue(text, fieldLabelPatterns.constructionYear, allLabelPatterns).match(/[0-9]{4}/)?.[0]?.trim() || "",
-    area: extractLabeledValue(text, fieldLabelPatterns.area, allLabelPatterns).match(/[0-9.,]+/)?.[0]?.trim() || "",
-    rate: extractLabeledValue(text, fieldLabelPatterns.rate, allLabelPatterns).match(/[0-9.,]+/)?.[0]?.trim() || ""
-  };
-}
-
-function getDocumentTextFromPdf(pdfDocument, pageLimit = OCR_PAGE_LIMIT) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const pageCount = Math.min(pdfDocument.numPages, pageLimit);
-      let combinedText = "";
-
-      for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
-        const page = await pdfDocument.getPage(pageNumber);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((item) => item.str).join(" ").trim();
-        combinedText += `${pageText}\n`;
-      }
-
-      resolve(combinedText.trim());
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
-
-async function ocrCanvas(canvas) {
-  const worker = await createWorker("eng");
-  try {
-    const result = await worker.recognize(canvas);
-    return result.data.text || "";
-  } finally {
-    await worker.terminate();
-  }
-}
-
-async function extractTextFromPdfFile(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer, disableWorker: true }).promise;
-
-  const textContent = await getDocumentTextFromPdf(pdfDocument);
-  if (textContent && textContent.length > 25) {
-    return textContent;
-  }
-
-  const page = await pdfDocument.getPage(1);
-  const viewport = page.getViewport({ scale: 2 });
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
-
-  await page.render({ canvasContext: context, viewport }).promise;
-  return ocrCanvas(canvas);
-}
-
-async function extractTextFromImageFile(file) {
-  return ocrCanvas(file);
-}
-
-async function extractLocalDocumentText(file) {
-  const mimeType = file.type || "";
-  const isPdf = mimeType === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-
-  if (isPdf) {
-    return extractTextFromPdfFile(file);
-  }
-
-  return extractTextFromImageFile(file);
-}
 
 export default function PropertyDetailsForm({ isOpen, onClose, polygonLocation }) {
 
   const [formData, setFormData] = useState(initialState);
-  const fileInputRef = useRef(null);
-  const [documentFile, setDocumentFile] = useState(null);
-  const [isAutofillPanelOpen, setIsAutofillPanelOpen] = useState(false);
-  const [importError, setImportError] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [draftPreview, setDraftPreview] = useState(null);
+  const {
+    fileInputRef,
+    documentFile,
+    isAutofillPanelOpen,
+    setIsAutofillPanelOpen,
+    importError,
+    isAnalyzing,
+    draftPreview,
+    openDocumentPicker,
+    handleDocumentChange,
+    handleDocumentDrop,
+    handleDocumentDragOver
+  } = useDocumentAutofill(PROPERTY_FIELD_DEFINITIONS, {
+    onDraft: (draft) => {
+      setFormData((previousState) => mergeDraftValues(previousState, draft));
+    }
+  });
 
   useEffect(() => {
   if (polygonLocation) {
@@ -298,64 +124,6 @@ export default function PropertyDetailsForm({ isOpen, onClose, polygonLocation }
     }));
 
   }, [formData.area, formData.rate]);
-
-  // This is the document-to-form bridge: upload a scan, extract text locally,
-  // then merge only the filled fields into the current form.
-  const handleDocumentImport = async (file) => {
-    if (!file) return;
-
-    setIsAutofillPanelOpen(true);
-    setDocumentFile(file);
-    setIsAnalyzing(true);
-    setImportError("");
-
-    try {
-      const extractedText = await extractLocalDocumentText(file);
-      const draft = extractDraftFromText(extractedText);
-
-      setDraftPreview({
-        source: "local-ocr",
-        extractedText,
-        draft
-      });
-
-      setFormData((previousState) => applyDraftToForm(previousState, draft));
-
-      // Close the upload overlay after a successful autofill so the user
-      // lands directly on the filled form fields.
-      setIsAutofillPanelOpen(false);
-    } catch (error) {
-      const rawMessage = error?.message || "Failed to analyze the uploaded file";
-
-      setImportError(`Local OCR could not read this file: ${rawMessage}`);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const handleDocumentChange = (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      handleDocumentImport(file);
-    }
-  };
-
-  const handleDocumentDrop = (event) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files?.[0];
-    if (file) {
-      handleDocumentImport(file);
-    }
-  };
-
-  const handleDocumentDragOver = (event) => {
-    event.preventDefault();
-  };
-
-  const openDocumentPicker = () => {
-    fileInputRef.current?.click();
-  };
-
 
   const handleChange = (e) => {
 
@@ -651,82 +419,21 @@ Cancel
 
 </div>
 
-{isAutofillPanelOpen && (
-<div className="autofill-overlay-layer" onClick={() => setIsAutofillPanelOpen(false)}>
-<section
-className="document-import-panel document-import-panel--overlay"
-onClick={(event) => event.stopPropagation()}
-onDrop={handleDocumentDrop}
-onDragOver={handleDocumentDragOver}
->
-  <div className="document-import-copy document-import-copy--compact">
-    <div className="document-import-head-row">
-      <div className="document-import-eyebrow">
-        <Sparkles size={14} />
-        <span>Document auto-fill</span>
-      </div>
-      <button
-        type="button"
-        className="document-overlay-close"
-        onClick={() => setIsAutofillPanelOpen(false)}
-      >
-        <X size={16} />
-      </button>
-    </div>
-
-    <h4>Upload hardcopy, auto-fill the form</h4>
-  </div>
-
-  <input
-    ref={fileInputRef}
-    type="file"
-    accept="image/*,.pdf"
-    onChange={handleDocumentChange}
-    className="document-file-input"
-  />
-
-  <button
-    type="button"
-    className={`document-upload-button ${isAnalyzing ? "is-working" : ""}`}
-    onClick={openDocumentPicker}
-    onDrop={handleDocumentDrop}
-    onDragOver={handleDocumentDragOver}
-  >
-    <UploadCloud size={20} />
-    <span>
-      {documentFile ? "Replace uploaded hardcopy" : "Upload hardcopy to auto-fill"}
-    </span>
-    <small>
-      {documentFile
-        ? `${documentFile.name} • ${formatFileSize(documentFile.size)}`
-        : "PNG, JPG, JPEG, or PDF"}
-    </small>
-  </button>
-
-  {importError && <div className="document-import-error">{importError}</div>}
-
-  {draftPreview?.draft && (
-    <div className="document-preview">
-      <div className="document-preview-header">
-        <strong>Extracted draft</strong>
-      </div>
-
-      <div className="document-preview-grid">
-        {Object.entries(draftPreview.draft)
-          .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
-          .slice(0, 6)
-          .map(([key, value]) => (
-            <div key={key} className="document-preview-item">
-              <span>{key}</span>
-              <strong>{String(value)}</strong>
-            </div>
-          ))}
-      </div>
-    </div>
-  )}
-</section>
-</div>
-)}
+<DocumentAutofillOverlay
+  isOpen={isAutofillPanelOpen}
+  onClose={() => setIsAutofillPanelOpen(false)}
+  title="Upload property hardcopy, auto-fill the form"
+  description="Upload a scanned property document and the extracted values will populate the property fields automatically."
+  fileInputRef={fileInputRef}
+  openDocumentPicker={openDocumentPicker}
+  documentFile={documentFile}
+  isAnalyzing={isAnalyzing}
+  importError={importError}
+  draftPreview={draftPreview}
+  handleDocumentChange={handleDocumentChange}
+  handleDocumentDrop={handleDocumentDrop}
+  handleDocumentDragOver={handleDocumentDragOver}
+/>
 
 </div>
 </div>

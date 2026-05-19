@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { X, Save } from "lucide-react";
+import { X, Save, UploadCloud } from "lucide-react";
 import axios from "axios";
 import "../Style/HouseDetailsModal.css";
 
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { DocumentAutofillOverlay, mergeDraftValues, useDocumentAutofill } from "./documentAutofillHelpers";
 
 const initialState = {
   ownerName: "",
@@ -17,8 +18,34 @@ const initialState = {
   longitude: ""
 };
 
+const APPEAL_FIELD_DEFINITIONS = [
+  { name: "ownerName", patterns: [/owner\s*name/i, /name\s*of\s*owner/i] },
+  { name: "ward", patterns: [/ward/i] },
+  { name: "propertyNo", patterns: [/property\s*no\.?/i, /property\s*number/i] },
+  { name: "previousTax", patterns: [/previous\s*tax/i], type: "number" },
+  { name: "revisedTax", patterns: [/revised\s*tax/i], type: "number" },
+  { name: "appealReason", patterns: [/appeal\s*reason/i, /reason\s*for\s*appeal/i] }
+];
+
 export default function AppealForm({ isOpen, onClose, polygonLocation }){
   const [formData, setFormData] = useState(initialState);
+  const {
+    fileInputRef,
+    documentFile,
+    isAutofillPanelOpen,
+    setIsAutofillPanelOpen,
+    importError,
+    isAnalyzing,
+    draftPreview,
+    openDocumentPicker,
+    handleDocumentChange,
+    handleDocumentDrop,
+    handleDocumentDragOver
+  } = useDocumentAutofill(APPEAL_FIELD_DEFINITIONS, {
+    onDraft: (draft) => {
+      setFormData((previousState) => mergeDraftValues(previousState, draft));
+    }
+  });
 
   useEffect(() => {
   if (polygonLocation) {
@@ -32,7 +59,7 @@ export default function AppealForm({ isOpen, onClose, polygonLocation }){
   
 
   const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData((previousState) => ({ ...previousState, [e.target.name]: e.target.value }));
   const navigate = useNavigate();
 
   
@@ -73,6 +100,7 @@ export default function AppealForm({ isOpen, onClose, polygonLocation }){
 </div>
 
         <div className="modal-body">
+          <div className={`form-content-shell ${isAutofillPanelOpen ? "is-blurred" : ""}`}>
           <fieldset>
             <legend>Appeal Details</legend>
             <div className="form-grid-2">
@@ -138,9 +166,19 @@ export default function AppealForm({ isOpen, onClose, polygonLocation }){
 
             </div>
           </fieldset>
+          </div>
         </div>
 
-        <div className="modal-footer">
+        <div className={`modal-footer ${isAutofillPanelOpen ? "is-blurred" : ""}`}>
+
+          <button
+            type="button"
+            onClick={() => setIsAutofillPanelOpen(true)}
+            className="button-ghost footer-autofill-button"
+          >
+            <UploadCloud size={16} /> Doc Autofill
+          </button>
+
           <button onClick={onClose} className="button-secondary">
             Cancel
           </button>
@@ -149,6 +187,22 @@ export default function AppealForm({ isOpen, onClose, polygonLocation }){
             <Save size={16}/> Save
           </button>
         </div>
+
+        <DocumentAutofillOverlay
+          isOpen={isAutofillPanelOpen}
+          onClose={() => setIsAutofillPanelOpen(false)}
+          title="Upload appeal hardcopy, auto-fill the form"
+          description="Upload a scanned appeal document and the extracted values will populate the appeal fields automatically."
+          fileInputRef={fileInputRef}
+          openDocumentPicker={openDocumentPicker}
+          documentFile={documentFile}
+          isAnalyzing={isAnalyzing}
+          importError={importError}
+          draftPreview={draftPreview}
+          handleDocumentChange={handleDocumentChange}
+          handleDocumentDrop={handleDocumentDrop}
+          handleDocumentDragOver={handleDocumentDragOver}
+        />
       </div>
     </div>
   );

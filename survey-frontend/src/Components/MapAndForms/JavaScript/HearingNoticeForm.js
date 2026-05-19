@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { X, Save } from "lucide-react";
+import { X, Save, UploadCloud } from "lucide-react";
 import axios from "axios";
 import "../Style/HouseDetailsModal.css";
 
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { DocumentAutofillOverlay, mergeDraftValues, useDocumentAutofill } from "./documentAutofillHelpers";
 
 const initialState = {
   ownerName: "",
@@ -18,9 +19,36 @@ const initialState = {
   longitude: ""
 };
 
+const HEARING_FIELD_DEFINITIONS = [
+  { name: "ownerName", patterns: [/owner\s*name/i, /name\s*of\s*owner/i] },
+  { name: "address", patterns: [/address/i] },
+  { name: "ward", patterns: [/ward/i] },
+  { name: "zone", patterns: [/zone/i] },
+  { name: "hearingDate", patterns: [/hearing\s*date/i, /date\s*of\s*hearing/i], type: "date" },
+  { name: "hearingTime", patterns: [/hearing\s*time/i, /time/i], type: "time" },
+  { name: "hearingLocation", patterns: [/hearing\s*location/i, /location/i] }
+];
+
 export default function HearingNoticeForm({ isOpen, onClose, polygonLocation }) {
 
   const [formData, setFormData] = useState(initialState);
+  const {
+    fileInputRef,
+    documentFile,
+    isAutofillPanelOpen,
+    setIsAutofillPanelOpen,
+    importError,
+    isAnalyzing,
+    draftPreview,
+    openDocumentPicker,
+    handleDocumentChange,
+    handleDocumentDrop,
+    handleDocumentDragOver
+  } = useDocumentAutofill(HEARING_FIELD_DEFINITIONS, {
+    onDraft: (draft) => {
+      setFormData((previousState) => mergeDraftValues(previousState, draft));
+    }
+  });
 
   useEffect(() => {
   if (polygonLocation) {
@@ -35,10 +63,10 @@ export default function HearingNoticeForm({ isOpen, onClose, polygonLocation }) 
     const navigate = useNavigate();
 
   const handleChange = (e) =>
-    setFormData({
-      ...formData,
+    setFormData((previousState) => ({
+      ...previousState,
       [e.target.name]: e.target.value
-    });
+    }));
 
 
   const handleSave = async () => {
@@ -91,6 +119,7 @@ export default function HearingNoticeForm({ isOpen, onClose, polygonLocation }) 
 </div>
 
         <div className="modal-body">
+          <div className={`form-content-shell ${isAutofillPanelOpen ? "is-blurred" : ""}`}>
 
           <fieldset>
             <legend>Hearing Details</legend>
@@ -165,9 +194,19 @@ export default function HearingNoticeForm({ isOpen, onClose, polygonLocation }) 
             </div>
           </fieldset>
 
+          </div>
+
         </div>
 
-        <div className="modal-footer">
+        <div className={`modal-footer ${isAutofillPanelOpen ? "is-blurred" : ""}`}>
+
+          <button
+            type="button"
+            onClick={() => setIsAutofillPanelOpen(true)}
+            className="button-ghost footer-autofill-button"
+          >
+            <UploadCloud size={16} /> Doc Autofill
+          </button>
 
           <button onClick={onClose} className="button-secondary">
             Cancel
@@ -178,6 +217,22 @@ export default function HearingNoticeForm({ isOpen, onClose, polygonLocation }) 
           </button>
 
         </div>
+
+        <DocumentAutofillOverlay
+          isOpen={isAutofillPanelOpen}
+          onClose={() => setIsAutofillPanelOpen(false)}
+          title="Upload hearing notice hardcopy, auto-fill the form"
+          description="Upload a scanned hearing notice and the extracted values will populate the hearing fields automatically."
+          fileInputRef={fileInputRef}
+          openDocumentPicker={openDocumentPicker}
+          documentFile={documentFile}
+          isAnalyzing={isAnalyzing}
+          importError={importError}
+          draftPreview={draftPreview}
+          handleDocumentChange={handleDocumentChange}
+          handleDocumentDrop={handleDocumentDrop}
+          handleDocumentDragOver={handleDocumentDragOver}
+        />
 
       </div>
     </div>
