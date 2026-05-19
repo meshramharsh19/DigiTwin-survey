@@ -1,0 +1,74 @@
+Property form document auto-fill change log
+
+Goal
+   - Remove Gemini dependency and make scanned property form autofill work locally in the browser.
+   - Keep manual form filling available when OCR cannot understand the document clearly.
+
+What was implemented
+   - Added a compact upload button at the top of the Main Property Assessment Entry modal.
+   - Added a local OCR pipeline so users can upload a scanned property form image or PDF.
+   - Added live preview of extracted text and extracted draft values.
+   - Added a fallback manual-entry hint so users can skip upload and fill the form normally.
+
+Libraries / tools used
+   - Tesseract.js for image OCR in the browser.
+   - PDF.js (`pdfjs-dist`) for PDF text extraction and PDF page rendering.
+   - React hooks (`useState`, `useEffect`, `useRef`) for upload state, OCR state, and file picker control.
+   - Regex-based parsing for mapping OCR text into form fields.
+
+File-by-file changes
+
+1. survey-frontend/src/Components/MapAndForms/JavaScript/PropertyDetailsForm.js
+   - Added the document upload CTA and manual-entry hint.
+   - Added file picker handling with drag/drop support.
+   - Added local OCR flow for image and PDF files.
+   - Configured PDF.js worker source so PDFs can be read in the browser.
+   - Added OCR text parsing helpers to map extracted text into these fields:
+     ownerName, occupierName, address, mobile, ward, zone, newPropertyNo, oldPropertyNo, usageType, constructionType, constructionYear, area, rate.
+   - Changed the import workflow from Gemini-based remote analysis to browser-side OCR.
+   - Kept the save request using REACT_APP_API_BASE_URL so submit still matches the backend URL.
+
+2. survey-frontend/src/Components/MapAndForms/Style/PropertyDetailsForm.css
+   - Added styles for the compact upload button and helper text.
+   - Added styles for OCR status, extracted preview, and error messages.
+   - Added dark-mode styles for the new OCR section.
+
+3. survey-frontend/package.json
+   - Added local OCR dependencies.
+   - Installed:
+     - tesseract.js@7.0.0
+     - pdfjs-dist@5.7.284
+
+4. survey-backend/routes/propertyAiRoutes.js
+   - This file was removed from the active flow because local OCR replaced Gemini.
+   - The app no longer depends on Gemini extraction for property autofill.
+
+5. survey-backend/server.js
+   - Removed the unused property OCR/Gemini route registration.
+   - Kept the app backend unchanged for normal save operations.
+
+6. survey-backend/.env
+   - Removed the Gemini API key from the active configuration because it is no longer needed for autofill.
+
+How the flow works now
+   - User uploads a scanned property image or PDF.
+   - The browser reads the file locally.
+   - PDF text is extracted first.
+   - If PDF text is weak or missing, OCR runs on the image/page.
+   - The extracted text is cleaned and mapped into the property form fields.
+   - The user reviews the prefilled data and then saves the form.
+   - If OCR cannot read a field, the user fills it manually.
+
+Implementation notes
+   - PDF.js worker source must be configured in the frontend or PDFs will fail with workerSrc errors.
+   - Greedy regex parsing was replaced with label-boundary parsing so values do not spill into the next field.
+   - Build validation was run after each major change and the frontend production build passes.
+
+Validation results
+   - Frontend build: successful.
+   - Syntax checks: successful.
+   - Final OCR flow: local-only, no Gemini quota dependency.
+
+Configuration note
+   - REACT_APP_API_BASE_URL is still useful if the backend is not on localhost:5001.
+   - Gemini is not required for the current autofill implementation.

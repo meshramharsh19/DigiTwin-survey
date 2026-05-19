@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 5001;
 
 // --- Middleware ---
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); // increase if KML / payloads are big
+app.use(express.json({ limit: '50mb' })); // allow scanned uploads encoded as base64
 app.use(express.urlencoded({ extended: true }));
 app.use("/videos", express.static("videos"));
 app.use('/api/auth', authRoutes);
